@@ -1,0 +1,2290 @@
+{
+  "customers": [
+    {
+      "id": "customer-cute-tomato",
+      "customerName": "Cute Tomato Hospitality LLP",
+      "customerCode": "REST_S_01",
+      "mapLink": "",
+      "contactName": "",
+      "contactNumber": "",
+      "billing": {
+        "organization": "Cute Tomato Hospitality LLP",
+        "address": "Paper Mill Compound, Metro City Centre\nNishatganj\nLucknow, Uttar Pradesh, 226006",
+        "gst": "09AASFC9850E1ZY",
+        "phone": "9118121555",
+        "paymentCycle": "30 days"
+      },
+      "chefs": []
+    },
+    {
+      "id": "customer-molecule-air-bar",
+      "customerName": "Molecule Air Bar",
+      "customerCode": "REST_M_01",
+      "mapLink": "",
+      "contactName": "",
+      "contactNumber": "",
+      "billing": {
+        "organization": "Molecule Air Bar",
+        "address": "3, Vipin Khand\nGomti Nagar, Lucknow, Uttar Pradesh",
+        "gst": "09AAACO9I3L1ZE",
+        "phone": "9305942060",
+        "paymentCycle": "45 days"
+      },
+      "chefs": []
+    },
+    {
+      "id": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "mapLink": "",
+      "contactName": "",
+      "contactNumber": "",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "chefs": []
+    },
+    {
+      "id": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "mapLink": "",
+      "contactName": "",
+      "contactNumber": "",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "chefs": []
+    },
+    {
+      "id": "customer-fosho",
+      "customerName": "FOSHO",
+      "customerCode": "REST_F_01",
+      "mapLink": "",
+      "contactName": "",
+      "contactNumber": "",
+      "billing": {
+        "organization": "FOSHO",
+        "address": "11, Habibullah Estate\nHazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAMCB4102H1ZU",
+        "phone": "7753851777",
+        "paymentCycle": "Due by 25th of the month"
+      },
+      "chefs": []
+    }
+  ],
+  "orders": [
+    {
+      "id": "migrated-order-0001",
+      "customerId": "customer-molecule-air-bar",
+      "customerName": "Molecule Air Bar",
+      "customerCode": "REST_M_01",
+      "billing": {
+        "organization": "Molecule Air Bar",
+        "address": "3, Vipin Khand\nGomti Nagar, Lucknow, Uttar Pradesh",
+        "gst": "09AAACO9I3L1ZE",
+        "phone": "9305942060",
+        "paymentCycle": "45 days"
+      },
+      "date": "2026-04-10",
+      "invoiceNumber": "0001",
+      "dueDate": "2026-05-25",
+      "discountPercent": 36.5466,
+      "subtotal": 944.0,
+      "discountAmount": 345.0,
+      "total": 599.0,
+      "items": [
+        {
+          "skuName": "Peas Microgreens 45 gms Box",
+          "description": "Pea Shoots Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 5,
+          "price": 149.0,
+          "amount": 745.0
+        },
+        {
+          "skuName": "Radish Purple Microgreens 45 gms Box",
+          "description": "Radish Purple Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0002",
+      "customerId": "customer-molecule-air-bar",
+      "customerName": "Molecule Air Bar",
+      "customerCode": "REST_M_01",
+      "billing": {
+        "organization": "Molecule Air Bar",
+        "address": "3, Vipin Khand\nGomti Nagar, Lucknow, Uttar Pradesh",
+        "gst": "09AAACO9I3L1ZE",
+        "phone": "9305942060",
+        "paymentCycle": "45 days"
+      },
+      "date": "2026-04-14",
+      "invoiceNumber": "0002",
+      "dueDate": "2026-05-29",
+      "discountPercent": 34.8089,
+      "subtotal": 497.0,
+      "discountAmount": 173.0,
+      "total": 324.0,
+      "items": [
+        {
+          "skuName": "Peas Microgreens 45 gms Box",
+          "description": "Pea Shoots Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        },
+        {
+          "skuName": "Radish Purple Microgreens 45 gms Box",
+          "description": "Radish Purple Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0003",
+      "customerId": "customer-molecule-air-bar",
+      "customerName": "Molecule Air Bar",
+      "customerCode": "REST_M_01",
+      "billing": {
+        "organization": "Molecule Air Bar",
+        "address": "3, Vipin Khand\nGomti Nagar, Lucknow, Uttar Pradesh",
+        "gst": "09AAACO9I3L1ZE",
+        "phone": "9305942060",
+        "paymentCycle": "45 days"
+      },
+      "date": "2026-04-18",
+      "invoiceNumber": "0003",
+      "dueDate": "2026-06-02",
+      "discountPercent": 38.255,
+      "subtotal": 298.0,
+      "discountAmount": 114.0,
+      "total": 184.0,
+      "items": [
+        {
+          "skuName": "Peas Microgreens 45 gms Box",
+          "description": "Pea Shoots Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0004",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-18",
+      "invoiceNumber": "0004",
+      "dueDate": "2026-05-18",
+      "discountPercent": 25.0,
+      "subtotal": 448.0,
+      "discountAmount": 112.0,
+      "total": 336.0,
+      "items": [
+        {
+          "skuName": "Broccoli Microgreens 45 gms Box",
+          "description": "Broccoli Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 249.0,
+          "amount": 249.0
+        },
+        {
+          "skuName": "Radish Purple Microgreens 45 gms Box",
+          "description": "Radish Purple Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0005",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-18",
+      "invoiceNumber": "0005",
+      "dueDate": "2026-05-18",
+      "discountPercent": 25.0,
+      "subtotal": 448.0,
+      "discountAmount": 112.0,
+      "total": 336.0,
+      "items": [
+        {
+          "skuName": "Broccoli Microgreens 45 gms Box",
+          "description": "Broccoli Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 249.0,
+          "amount": 249.0
+        },
+        {
+          "skuName": "Radish Purple Microgreens 45 gms Box",
+          "description": "Radish Purple Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0006",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-19",
+      "invoiceNumber": "0006",
+      "dueDate": "2026-05-19",
+      "discountPercent": 25.1678,
+      "subtotal": 298.0,
+      "discountAmount": 75.0,
+      "total": 223.0,
+      "items": [
+        {
+          "skuName": "Mustard Microgreens 45 gms Box",
+          "description": "Mustard Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0007",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-19",
+      "invoiceNumber": "0007",
+      "dueDate": "2026-05-19",
+      "discountPercent": 25.1678,
+      "subtotal": 298.0,
+      "discountAmount": 75.0,
+      "total": 223.0,
+      "items": [
+        {
+          "skuName": "Mustard Microgreens 45 gms Box",
+          "description": "Mustard Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0008",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-20",
+      "invoiceNumber": "0008",
+      "dueDate": "2026-05-20",
+      "discountPercent": 25.1678,
+      "subtotal": 298.0,
+      "discountAmount": 75.0,
+      "total": 223.0,
+      "items": [
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0009",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-20",
+      "invoiceNumber": "0009",
+      "dueDate": "2026-05-20",
+      "discountPercent": 25.5034,
+      "subtotal": 149.0,
+      "discountAmount": 38.0,
+      "total": 111.0,
+      "items": [
+        {
+          "skuName": "Mustard Microgreens 45 gms Box",
+          "description": "Mustard Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0010",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-21",
+      "invoiceNumber": "0010",
+      "dueDate": "2026-05-21",
+      "discountPercent": 25.1509,
+      "subtotal": 497.0,
+      "discountAmount": 125.0,
+      "total": 372.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 45 gms Box",
+          "description": "Radish Purple Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0011",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-21",
+      "invoiceNumber": "0011",
+      "dueDate": "2026-05-21",
+      "discountPercent": 25.1256,
+      "subtotal": 199.0,
+      "discountAmount": 50.0,
+      "total": 149.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 45 gms Box",
+          "description": "Radish Purple Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0012",
+      "customerId": "customer-molecule-air-bar",
+      "customerName": "Molecule Air Bar",
+      "customerCode": "REST_M_01",
+      "billing": {
+        "organization": "Molecule Air Bar",
+        "address": "3, Vipin Khand\nGomti Nagar, Lucknow, Uttar Pradesh",
+        "gst": "09AAACO9I3L1ZE",
+        "phone": "9305942060",
+        "paymentCycle": "45 days"
+      },
+      "date": "2026-04-22",
+      "invoiceNumber": "0012",
+      "dueDate": "2026-06-06",
+      "discountPercent": 34.8089,
+      "subtotal": 497.0,
+      "discountAmount": 173.0,
+      "total": 324.0,
+      "items": [
+        {
+          "skuName": "Peas Microgreens 45 gms Box",
+          "description": "Pea Shoots Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        },
+        {
+          "skuName": "Radish Purple Microgreens 45 gms Box",
+          "description": "Radish Purple Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0013",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-22",
+      "invoiceNumber": "0013",
+      "dueDate": "2026-05-22",
+      "discountPercent": 25.1509,
+      "subtotal": 497.0,
+      "discountAmount": 125.0,
+      "total": 372.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 45 gms Box",
+          "description": "Radish Purple Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0014",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-23",
+      "invoiceNumber": "0014",
+      "dueDate": "2026-05-23",
+      "discountPercent": 25.1678,
+      "subtotal": 298.0,
+      "discountAmount": 75.0,
+      "total": 223.0,
+      "items": [
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0015",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-25",
+      "invoiceNumber": "0015",
+      "dueDate": "2026-05-25",
+      "discountPercent": 25.5034,
+      "subtotal": 149.0,
+      "discountAmount": 38.0,
+      "total": 111.0,
+      "items": [
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0016",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-26",
+      "invoiceNumber": "0016",
+      "dueDate": "2026-05-26",
+      "discountPercent": 25.0559,
+      "subtotal": 447.0,
+      "discountAmount": 112.0,
+      "total": 335.0,
+      "items": [
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 3,
+          "price": 149.0,
+          "amount": 447.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0017",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-26",
+      "invoiceNumber": "0017",
+      "dueDate": "2026-05-26",
+      "discountPercent": 25.0,
+      "subtotal": 348.0,
+      "discountAmount": 87.0,
+      "total": 261.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 45 gms Box",
+          "description": "Radish Purple Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0018",
+      "customerId": "customer-molecule-air-bar",
+      "customerName": "Molecule Air Bar",
+      "customerCode": "REST_M_01",
+      "billing": {
+        "organization": "Molecule Air Bar",
+        "address": "3, Vipin Khand\nGomti Nagar, Lucknow, Uttar Pradesh",
+        "gst": "09AAACO9I3L1ZE",
+        "phone": "9305942060",
+        "paymentCycle": "45 days"
+      },
+      "date": "2026-04-26",
+      "invoiceNumber": "0018",
+      "dueDate": "2026-06-10",
+      "discountPercent": 33.4552,
+      "subtotal": 547.0,
+      "discountAmount": 183.0,
+      "total": 364.0,
+      "items": [
+        {
+          "skuName": "Broccoli Microgreens 45 gms Box",
+          "description": "Broccoli Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 249.0,
+          "amount": 249.0
+        },
+        {
+          "skuName": "Peas Microgreens 45 gms Box",
+          "description": "Pea Shoots Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0019",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-26",
+      "invoiceNumber": "0019",
+      "dueDate": "2026-05-26",
+      "discountPercent": 17.505,
+      "subtotal": 497.0,
+      "discountAmount": 87.0,
+      "total": 410.0,
+      "items": [
+        {
+          "skuName": "Mustard Microgreens 45 gms Box",
+          "description": "Mustard Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        },
+        {
+          "skuName": "Radish Purple Microgreens 45 gms Box",
+          "description": "Radish Purple Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0020",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-27",
+      "invoiceNumber": "0020",
+      "dueDate": "2026-05-27",
+      "discountPercent": 25.1678,
+      "subtotal": 298.0,
+      "discountAmount": 75.0,
+      "total": 223.0,
+      "items": [
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0021",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-27",
+      "invoiceNumber": "0021",
+      "dueDate": "2026-05-27",
+      "discountPercent": 25.1509,
+      "subtotal": 497.0,
+      "discountAmount": 125.0,
+      "total": 372.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 45 gms Box",
+          "description": "Radish Purple Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0022",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-28",
+      "invoiceNumber": "0022",
+      "dueDate": "2026-05-28",
+      "discountPercent": 25.1678,
+      "subtotal": 298.0,
+      "discountAmount": 75.0,
+      "total": 223.0,
+      "items": [
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0023",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-28",
+      "invoiceNumber": "0023",
+      "dueDate": "2026-05-28",
+      "discountPercent": 25.0457,
+      "subtotal": 547.0,
+      "discountAmount": 137.0,
+      "total": 410.0,
+      "items": [
+        {
+          "skuName": "Broccoli Microgreens 45 gms Box",
+          "description": "Brocolli Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 249.0,
+          "amount": 249.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0024",
+      "customerId": "customer-molecule-air-bar",
+      "customerName": "Molecule Air Bar",
+      "customerCode": "REST_M_01",
+      "billing": {
+        "organization": "Molecule Air Bar",
+        "address": "3, Vipin Khand\nGomti Nagar, Lucknow, Uttar Pradesh",
+        "gst": "09AAACO9I3L1ZE",
+        "phone": "9305942060",
+        "paymentCycle": "45 days"
+      },
+      "date": "2026-04-29",
+      "invoiceNumber": "0024",
+      "dueDate": "2026-06-13",
+      "discountPercent": 38.0313,
+      "subtotal": 447.0,
+      "discountAmount": 170.0,
+      "total": 277.0,
+      "items": [
+        {
+          "skuName": "Peas Microgreens 45 gms Box",
+          "description": "Pea Shoots Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0025",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-29",
+      "invoiceNumber": "0025",
+      "dueDate": "2026-05-29",
+      "discountPercent": 25.0559,
+      "subtotal": 447.0,
+      "discountAmount": 112.0,
+      "total": 335.0,
+      "items": [
+        {
+          "skuName": "Mustard Microgreens 45 gms Box",
+          "description": "Mustard Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0026",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-29",
+      "invoiceNumber": "0026",
+      "dueDate": "2026-05-29",
+      "discountPercent": 25.5034,
+      "subtotal": 149.0,
+      "discountAmount": 38.0,
+      "total": 111.0,
+      "items": [
+        {
+          "skuName": "Mustard Microgreens 45 gms Box",
+          "description": "Mustard Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0027",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-04-30",
+      "invoiceNumber": "0027",
+      "dueDate": "2026-05-30",
+      "discountPercent": 25.0457,
+      "subtotal": 547.0,
+      "discountAmount": 137.0,
+      "total": 410.0,
+      "items": [
+        {
+          "skuName": "Broccoli Microgreens 45 gms Box",
+          "description": "Broccoli Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 249.0,
+          "amount": 249.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0028",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-01",
+      "invoiceNumber": "0028",
+      "dueDate": "2026-05-31",
+      "discountPercent": 25.1678,
+      "subtotal": 298.0,
+      "discountAmount": 75.0,
+      "total": 223.0,
+      "items": [
+        {
+          "skuName": "Mustard Microgreens 45 gms Box",
+          "description": "Mustard Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0029",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-01",
+      "invoiceNumber": "0029",
+      "dueDate": "2026-05-31",
+      "discountPercent": 25.5034,
+      "subtotal": 149.0,
+      "discountAmount": 38.0,
+      "total": 111.0,
+      "items": [
+        {
+          "skuName": "Mustard Microgreens 45 gms Box",
+          "description": "Mustard Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0030",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-02",
+      "invoiceNumber": "0030",
+      "dueDate": "2026-06-01",
+      "discountPercent": 25.0559,
+      "subtotal": 447.0,
+      "discountAmount": 112.0,
+      "total": 335.0,
+      "items": [
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 3,
+          "price": 149.0,
+          "amount": 447.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0031",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-02",
+      "invoiceNumber": "0031",
+      "dueDate": "2026-06-01",
+      "discountPercent": 25.5034,
+      "subtotal": 149.0,
+      "discountAmount": 38.0,
+      "total": 111.0,
+      "items": [
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0032",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-03",
+      "invoiceNumber": "0032",
+      "dueDate": "2026-06-02",
+      "discountPercent": 25.1678,
+      "subtotal": 298.0,
+      "discountAmount": 75.0,
+      "total": 223.0,
+      "items": [
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0033",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-03",
+      "invoiceNumber": "0033",
+      "dueDate": "2026-06-02",
+      "discountPercent": 25.1678,
+      "subtotal": 298.0,
+      "discountAmount": 75.0,
+      "total": 223.0,
+      "items": [
+        {
+          "skuName": "Mustard Microgreens 45 gms Box",
+          "description": "Mustard Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0034",
+      "customerId": "customer-molecule-air-bar",
+      "customerName": "Molecule Air Bar",
+      "customerCode": "REST_M_01",
+      "billing": {
+        "organization": "Molecule Air Bar",
+        "address": "3, Vipin Khand\nGomti Nagar, Lucknow, Uttar Pradesh",
+        "gst": "09AAACO9I3L1ZE",
+        "phone": "9305942060",
+        "paymentCycle": "45 days"
+      },
+      "date": "2026-05-03",
+      "invoiceNumber": "0034",
+      "dueDate": "2026-06-17",
+      "discountPercent": 25.0559,
+      "subtotal": 447.0,
+      "discountAmount": 112.0,
+      "total": 335.0,
+      "items": [
+        {
+          "skuName": "Mustard Microgreens 45 gms Box",
+          "description": "Mustard Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        },
+        {
+          "skuName": "Peas Microgreens 45 gms Box",
+          "description": "Pea Shoots Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0035",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-04",
+      "invoiceNumber": "0035",
+      "dueDate": "2026-06-03",
+      "discountPercent": 25.1678,
+      "subtotal": 298.0,
+      "discountAmount": 75.0,
+      "total": 223.0,
+      "items": [
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0036",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-05",
+      "invoiceNumber": "0036",
+      "dueDate": "2026-06-04",
+      "discountPercent": 25.1256,
+      "subtotal": 199.0,
+      "discountAmount": 50.0,
+      "total": 149.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 45 gms Box",
+          "description": "Radish Purple Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0037",
+      "customerId": "customer-molecule-air-bar",
+      "customerName": "Molecule Air Bar",
+      "customerCode": "REST_M_01",
+      "billing": {
+        "organization": "Molecule Air Bar",
+        "address": "3, Vipin Khand\nGomti Nagar, Lucknow, Uttar Pradesh",
+        "gst": "09AAACO9I3L1ZE",
+        "phone": "9305942060",
+        "paymentCycle": "45 days"
+      },
+      "date": "2026-05-06",
+      "invoiceNumber": "0037",
+      "dueDate": "2026-06-20",
+      "discountPercent": 25.0559,
+      "subtotal": 447.0,
+      "discountAmount": 112.0,
+      "total": 335.0,
+      "items": [
+        {
+          "skuName": "Peas Microgreens 45 gms Box",
+          "description": "Pea Shoots Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0038",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-06",
+      "invoiceNumber": "0038",
+      "dueDate": "2026-06-05",
+      "discountPercent": 25.0,
+      "subtotal": 468.0,
+      "discountAmount": 117.0,
+      "total": 351.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 65 gms Box",
+          "description": "Radish Purple Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 269.0,
+          "amount": 269.0
+        },
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0039",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-07",
+      "invoiceNumber": "0039",
+      "dueDate": "2026-06-06",
+      "discountPercent": 25.1256,
+      "subtotal": 398.0,
+      "discountAmount": 100.0,
+      "total": 298.0,
+      "items": [
+        {
+          "skuName": "Mustard Microgreens 65 gms Box",
+          "description": "Mustard Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        },
+        {
+          "skuName": "Radish Purple Microgreens 65 gms Box",
+          "description": "Radish Purple Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0040",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-08",
+      "invoiceNumber": "0040",
+      "dueDate": "2026-06-07",
+      "discountPercent": 25.0,
+      "subtotal": 936.0,
+      "discountAmount": 234.0,
+      "total": 702.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 65 gms Box",
+          "description": "Radish Purple Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 269.0,
+          "amount": 538.0
+        },
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 199.0,
+          "amount": 398.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0041",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-09",
+      "invoiceNumber": "0041",
+      "dueDate": "2026-06-08",
+      "discountPercent": 25.1018,
+      "subtotal": 737.0,
+      "discountAmount": 185.0,
+      "total": 552.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 65 gms Box",
+          "description": "Radish Purple Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 269.0,
+          "amount": 538.0
+        },
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0042",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-09",
+      "invoiceNumber": "0042",
+      "dueDate": "2026-06-08",
+      "discountPercent": 25.1256,
+      "subtotal": 398.0,
+      "discountAmount": 100.0,
+      "total": 298.0,
+      "items": [
+        {
+          "skuName": "Mustard Microgreens 65 gms Box",
+          "description": "Mustard Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        },
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0043",
+      "customerId": "customer-molecule-air-bar",
+      "customerName": "Molecule Air Bar",
+      "customerCode": "REST_M_01",
+      "billing": {
+        "organization": "Molecule Air Bar",
+        "address": "3, Vipin Khand\nGomti Nagar, Lucknow, Uttar Pradesh",
+        "gst": "09AAACO9I3L1ZE",
+        "phone": "9305942060",
+        "paymentCycle": "45 days"
+      },
+      "date": "2026-05-11",
+      "invoiceNumber": "0043",
+      "dueDate": "2026-06-25",
+      "discountPercent": 25.1678,
+      "subtotal": 298.0,
+      "discountAmount": 75.0,
+      "total": 223.0,
+      "items": [
+        {
+          "skuName": "Peas Microgreens 45 gms Box",
+          "description": "Peas Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0044",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-10",
+      "invoiceNumber": "0044",
+      "dueDate": "2026-06-09",
+      "discountPercent": 25.0375,
+      "subtotal": 667.0,
+      "discountAmount": 167.0,
+      "total": 500.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 65 gms Box",
+          "description": "Radish Purple Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 269.0,
+          "amount": 269.0
+        },
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 199.0,
+          "amount": 398.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0045",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-11",
+      "invoiceNumber": "0045",
+      "dueDate": "2026-06-10",
+      "discountPercent": 25.0375,
+      "subtotal": 667.0,
+      "discountAmount": 167.0,
+      "total": 500.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 65 gms Box",
+          "description": "Radish Purple Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 269.0,
+          "amount": 269.0
+        },
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 199.0,
+          "amount": 398.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0046",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-11",
+      "invoiceNumber": "0046",
+      "dueDate": "2026-06-10",
+      "discountPercent": 25.0,
+      "subtotal": 468.0,
+      "discountAmount": 117.0,
+      "total": 351.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 65 gms Box",
+          "description": "Radish Purple Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 269.0,
+          "amount": 269.0
+        },
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0047",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-12",
+      "invoiceNumber": "0047",
+      "dueDate": "2026-06-11",
+      "discountPercent": 25.0375,
+      "subtotal": 667.0,
+      "discountAmount": 167.0,
+      "total": 500.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 65 gms Box",
+          "description": "Radish Purple Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 269.0,
+          "amount": 269.0
+        },
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 199.0,
+          "amount": 398.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0048",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-12",
+      "invoiceNumber": "0048",
+      "dueDate": "2026-06-11",
+      "discountPercent": 25.0,
+      "subtotal": 468.0,
+      "discountAmount": 117.0,
+      "total": 351.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 65 gms Box",
+          "description": "Radish Purple Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 269.0,
+          "amount": 269.0
+        },
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0049",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-13",
+      "invoiceNumber": "0049",
+      "dueDate": "2026-06-12",
+      "discountPercent": 25.0,
+      "subtotal": 468.0,
+      "discountAmount": 117.0,
+      "total": 351.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 65 gms Box",
+          "description": "Radish Purple Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 269.0,
+          "amount": 269.0
+        },
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0050",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-13",
+      "invoiceNumber": "0050",
+      "dueDate": "2026-06-12",
+      "discountPercent": 25.0,
+      "subtotal": 468.0,
+      "discountAmount": 117.0,
+      "total": 351.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 65 gms Box",
+          "description": "Radish Purple Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 269.0,
+          "amount": 269.0
+        },
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0051",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-14",
+      "invoiceNumber": "0051",
+      "dueDate": "2026-06-13",
+      "discountPercent": 25.0,
+      "subtotal": 468.0,
+      "discountAmount": 117.0,
+      "total": 351.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 65 gms Box",
+          "description": "Radish Purple Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 269.0,
+          "amount": 269.0
+        },
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0052",
+      "customerId": "customer-fosho",
+      "customerName": "FOSHO",
+      "customerCode": "REST_F_01",
+      "billing": {
+        "organization": "FOSHO",
+        "address": "11, Habibullah Estate\nHazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAMCB4102H1ZU",
+        "phone": "7753851777",
+        "paymentCycle": "Due by 25th of the month"
+      },
+      "date": "2026-05-15",
+      "invoiceNumber": "0052",
+      "dueDate": "2026-05-25",
+      "discountPercent": 25.0,
+      "subtotal": 348.0,
+      "discountAmount": 87.0,
+      "total": 261.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 45 gms Box",
+          "description": "Radish Purple Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0053",
+      "customerId": "customer-molecule-air-bar",
+      "customerName": "Molecule Air Bar",
+      "customerCode": "REST_M_01",
+      "billing": {
+        "organization": "Molecule Air Bar",
+        "address": "3, Vipin Khand\nGomti Nagar, Lucknow, Uttar Pradesh",
+        "gst": "09AAACO9I3L1ZE",
+        "phone": "9305942060",
+        "paymentCycle": "45 days"
+      },
+      "date": "2026-05-16",
+      "invoiceNumber": "0053",
+      "dueDate": "2026-06-30",
+      "discountPercent": 25.0559,
+      "subtotal": 447.0,
+      "discountAmount": 112.0,
+      "total": 335.0,
+      "items": [
+        {
+          "skuName": "Peas Microgreens 45 gms Box",
+          "description": "Peas Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0055",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-17",
+      "invoiceNumber": "0055",
+      "dueDate": "2026-06-16",
+      "discountPercent": 25.0,
+      "subtotal": 468.0,
+      "discountAmount": 117.0,
+      "total": 351.0,
+      "items": [
+        {
+          "skuName": "Radish Purple Microgreens 65 gms Box",
+          "description": "Radish Purple Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 269.0,
+          "amount": 269.0
+        },
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0056",
+      "customerId": "customer-molecule-air-bar",
+      "customerName": "Molecule Air Bar",
+      "customerCode": "REST_M_01",
+      "billing": {
+        "organization": "Molecule Air Bar",
+        "address": "3, Vipin Khand\nGomti Nagar, Lucknow, Uttar Pradesh",
+        "gst": "09AAACO9I3L1ZE",
+        "phone": "9305942060",
+        "paymentCycle": "45 days"
+      },
+      "date": "2026-05-17",
+      "invoiceNumber": "0056",
+      "dueDate": "2026-07-01",
+      "discountPercent": 25.1256,
+      "subtotal": 199.0,
+      "discountAmount": 50.0,
+      "total": 149.0,
+      "items": [
+        {
+          "skuName": "Moong Sprouts Hand-trimmed 45 gms Box",
+          "description": "Moong Sprouts Hand-trimmed 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0057",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-18",
+      "invoiceNumber": "0057",
+      "dueDate": "2026-06-17",
+      "discountPercent": 25.1256,
+      "subtotal": 398.0,
+      "discountAmount": 100.0,
+      "total": 298.0,
+      "items": [
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 199.0,
+          "amount": 398.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0058",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-18",
+      "invoiceNumber": "0058",
+      "dueDate": "2026-06-17",
+      "discountPercent": 25.1256,
+      "subtotal": 398.0,
+      "discountAmount": 100.0,
+      "total": 298.0,
+      "items": [
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 199.0,
+          "amount": 398.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0059",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-19",
+      "invoiceNumber": "0059",
+      "dueDate": "2026-06-18",
+      "discountPercent": 25.1256,
+      "subtotal": 597.0,
+      "discountAmount": 150.0,
+      "total": 447.0,
+      "items": [
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 3,
+          "price": 199.0,
+          "amount": 597.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0060",
+      "customerId": "customer-nai-coffee-gomti-nagar",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_02",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "7/158, Gomti Nagar, Vivek Khand\nLucknow, Uttar Pradesh, 226010",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "8471016723",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-19",
+      "invoiceNumber": "0060",
+      "dueDate": "2026-06-18",
+      "discountPercent": 25.1256,
+      "subtotal": 597.0,
+      "discountAmount": 150.0,
+      "total": 447.0,
+      "items": [
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 3,
+          "price": 199.0,
+          "amount": 597.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0061",
+      "customerId": "customer-nai-coffee-hazratganj",
+      "customerName": "NAI COFFEE PRIVATE LIMITED",
+      "customerCode": "REST_R_01",
+      "billing": {
+        "organization": "NAI COFFEE PRIVATE LIMITED",
+        "address": "12, Jahangirabad Palace\nRana Laxmibhai Marg, Hazratganj\nLucknow, Uttar Pradesh, 226001",
+        "gst": "09AAHC5928J1ZY",
+        "phone": "9559060424",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-20",
+      "invoiceNumber": "0061",
+      "dueDate": "2026-06-19",
+      "discountPercent": 25.1256,
+      "subtotal": 398.0,
+      "discountAmount": 100.0,
+      "total": 298.0,
+      "items": [
+        {
+          "skuName": "Radish White Microgreens 65 gms Box",
+          "description": "Radish White Microgreens 65 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 199.0,
+          "amount": 398.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0062",
+      "customerId": "customer-molecule-air-bar",
+      "customerName": "Molecule Air Bar",
+      "customerCode": "REST_M_01",
+      "billing": {
+        "organization": "Molecule Air Bar",
+        "address": "3, Vipin Khand\nGomti Nagar, Lucknow, Uttar Pradesh",
+        "gst": "09AAACO9I3L1ZE",
+        "phone": "9305942060",
+        "paymentCycle": "45 days"
+      },
+      "date": "2026-05-20",
+      "invoiceNumber": "0062",
+      "dueDate": "2026-07-04",
+      "discountPercent": 25.1509,
+      "subtotal": 497.0,
+      "discountAmount": 125.0,
+      "total": 372.0,
+      "items": [
+        {
+          "skuName": "Peas Microgreens 45 gms Box",
+          "description": "Peas Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        },
+        {
+          "skuName": "Radish Purple Microgreens 45 gms Box",
+          "description": "Radish Purple Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 199.0,
+          "amount": 199.0
+        },
+        {
+          "skuName": "Radish White Microgreens 45 gms Box",
+          "description": "Radish White Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 149.0,
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "id": "migrated-order-0063",
+      "customerId": "customer-cute-tomato",
+      "customerName": "Cute Tomato Hospitality LLP",
+      "customerCode": "REST_S_01",
+      "billing": {
+        "organization": "Cute Tomato Hospitality LLP",
+        "address": "Paper Mill Compound, Metro City Centre\nNishatganj\nLucknow, Uttar Pradesh, 226006",
+        "gst": "09AASFC9850E1ZY",
+        "phone": "9118121555",
+        "paymentCycle": "30 days"
+      },
+      "date": "2026-05-20",
+      "invoiceNumber": "0063",
+      "dueDate": "2026-06-19",
+      "discountPercent": 25.0794,
+      "subtotal": 945.0,
+      "discountAmount": 237.0,
+      "total": 708.0,
+      "items": [
+        {
+          "skuName": "Peas Microgreens 45 gms Box",
+          "description": "Peas Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 149.0,
+          "amount": 298.0
+        },
+        {
+          "skuName": "Radish Purple Microgreens 45 gms Box",
+          "description": "Radish Purple Microgreens 45 gms Box",
+          "hsn": "6021000",
+          "quantity": 2,
+          "price": 199.0,
+          "amount": 398.0
+        },
+        {
+          "skuName": "Radish White Microgreens 80 gms Box",
+          "description": "Radish White Microgreens 80 gms Box",
+          "hsn": "6021000",
+          "quantity": 1,
+          "price": 249.0,
+          "amount": 249.0
+        }
+      ]
+    }
+  ]
+}

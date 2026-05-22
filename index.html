@@ -15,19 +15,19 @@
       <div class="hero__copy">
         <p class="eyebrow">Internal Operations</p>
         <h1>Administrative Portal</h1>
+        <p id="app-version" class="version-pill">Version -</p>
         <p class="hero__text">
-          Manage seeding plans and projected harvest output in one internal workspace.
-          The yield view now tracks crop-specific seed rates, harvest days, and box yield.
+          Manage yield planning, customers, SKUs, and invoice-ready orders from one internal workspace.
         </p>
       </div>
       <div class="hero__meta">
         <div class="meta-card">
-          <span class="meta-card__label">Active Module</span>
-          <strong>Yield Availability</strong>
+          <span class="meta-card__label">Workspace</span>
+          <strong>Leaf Over Logic Admin</strong>
         </div>
         <div class="meta-card">
-          <span class="meta-card__label">Planning Logic</span>
-          <strong>Configurable by crop and tray type</strong>
+          <span class="meta-card__label">Storage</span>
+          <strong>Firebase Realtime Database</strong>
         </div>
       </div>
     </header>
@@ -38,111 +38,432 @@
           <div>
             <p class="section-tag">Apps</p>
             <h2>Choose a workspace</h2>
-            <p class="section-subtitle">Start with the operations module that matters right now.</p>
+            <p class="section-subtitle">Each app uses the same Firebase save flow.</p>
+          </div>
+          <div class="toolbar hidden">
+            <button id="save-data-home" class="secondary-button primary-button" type="button">Save Data to Firebase</button>
+            <button id="run-migration" class="secondary-button" type="button">Run One-Time Migration</button>
           </div>
         </div>
 
-        <div class="app-grid">
-          <button id="open-yield-app" class="app-tile" type="button">
+        <div class="app-grid app-grid--five">
+          <button class="app-tile" type="button" data-open-app="yield">
             <span class="app-tile__badge">Live</span>
             <strong>Yield Availability</strong>
-            <span>Seed planning, tray counts, projected boxes, and a monthly harvest calendar.</span>
+            <span>Tray planning and projected boxes.</span>
+          </button>
+          <button class="app-tile" type="button" data-open-app="customers">
+            <span class="app-tile__badge">CRM</span>
+            <strong>Customers</strong>
+            <span>Customer profiles, billing data, and chefs.</span>
+          </button>
+          <button class="app-tile" type="button" data-open-app="skus">
+            <span class="app-tile__badge">Catalog</span>
+            <strong>SKU</strong>
+            <span>Manage product catalog, price, and HSN.</span>
+          </button>
+          <button class="app-tile" type="button" data-open-app="ordering">
+            <span class="app-tile__badge">Billing</span>
+            <strong>Ordering App</strong>
+            <span>Create orders and generate invoices.</span>
+          </button>
+          <button class="app-tile" type="button" data-open-app="analytics">
+            <span class="app-tile__badge">Insights</span>
+            <strong>Analytics</strong>
+            <span>Sales trends and two-week demand forecasting.</span>
           </button>
         </div>
       </section>
 
-      <section id="yield-view" class="panel hidden">
+      <section id="app-view" class="panel hidden">
         <div class="section-heading">
           <div>
-            <p class="section-tag">Yield Availability</p>
-            <h2>Seed planning and projected boxes</h2>
-            <p class="section-subtitle">
-              The seeding grid uses tray counts. Box output is calculated from each crop's configurable rules.
-            </p>
+            <p id="active-app-tag" class="section-tag">App</p>
+            <h2 id="active-app-title">Workspace</h2>
+            <p id="active-app-subtitle" class="section-subtitle">Manage data and save it to Firebase.</p>
           </div>
           <div class="toolbar">
+            <span id="sync-status" class="status-pill">Firebase not configured</span>
+            <button id="save-data" class="secondary-button primary-button" type="button">Save</button>
             <button id="back-to-home" class="secondary-button" type="button">Back</button>
           </div>
         </div>
 
-        <div class="summary-grid">
-          <article class="summary-card">
-            <span>Planning window</span>
-            <strong id="planning-window-label">-</strong>
-          </article>
-          <article class="summary-card">
-            <span>Total seeded trays</span>
-            <strong id="window-total">0</strong>
-          </article>
-          <article class="summary-card">
-            <span>Projected boxes this month</span>
-            <strong id="month-total">0</strong>
-          </article>
+        <div id="yield-app" class="app-panel hidden">
+          <div class="summary-grid">
+            <article class="summary-card">
+              <span>Planning window</span>
+              <strong id="planning-window-label">-</strong>
+            </article>
+            <article class="summary-card">
+              <span>Total seeded trays</span>
+              <strong id="window-total">0</strong>
+            </article>
+            <article class="summary-card">
+              <span>Projected boxes in window</span>
+              <strong id="month-total">0</strong>
+            </article>
+          </div>
+
+          <div class="content-stack">
+            <section class="card collapsible-card is-collapsed" data-card="config">
+              <button class="card-toggle-bar" type="button" data-toggle-card="config">
+                <div>
+                  <h3>Yield Configuration</h3>
+                  <p>Edit crop rules here. Black tray values are calculated using the global multiplier.</p>
+                </div>
+                <span class="collapse-indicator">Expand</span>
+              </button>
+              <div class="collapsible-content">
+                <div class="config-toolbar">
+                  <label class="inline-field">
+                    <span>Black tray multiplier</span>
+                    <input id="black-tray-multiplier" type="number" min="0" step="0.1" value="2.5">
+                  </label>
+                  <span class="mobile-hint">On mobile, swipe horizontally to review all columns.</span>
+                </div>
+                <div class="table-shell">
+                  <table id="config-table" class="data-table config-table"></table>
+                </div>
+              </div>
+            </section>
+
+            <section class="card collapsible-card is-collapsed" data-card="seeding">
+              <button class="card-toggle-bar" type="button" data-toggle-card="seeding">
+                <div>
+                  <h3>Seeding Plan</h3>
+                  <p>Each column shows the seeding date and the default 11-day reference below it.</p>
+                </div>
+                <span class="collapse-indicator">Expand</span>
+              </button>
+              <div class="collapsible-content">
+                <div class="table-shell">
+                  <table id="seeding-table" class="data-table seeding-table"></table>
+                </div>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="card__header">
+                <div>
+                  <h3>Projected Boxes</h3>
+                  <p>Output is grouped by harvest date using each crop's actual harvest days and tray yield.</p>
+                </div>
+              </div>
+              <div class="table-shell">
+                <table id="boxes-table" class="data-table boxes-table"></table>
+              </div>
+            </section>
+          </div>
         </div>
 
-        <div class="content-stack">
-          <section class="card">
-            <div class="card__header">
-              <div>
-                <h3>Yield Configuration</h3>
-                <p>Edit crop rules here. Black tray values are calculated using the global multiplier.</p>
+        <div id="customers-app" class="app-panel hidden">
+          <div class="two-column-layout">
+            <section class="card">
+              <div class="card__header">
+                <div>
+                  <h3>Customers</h3>
+                  <p>Create, edit, and manage customer records.</p>
+                </div>
               </div>
+              <div id="customers-list" class="list-stack"></div>
+            </section>
+
+            <section class="card">
+              <div class="card__header">
+                <div>
+                  <h3 id="customer-form-title">New Customer</h3>
+                  <p>Billing and chef information are saved with the customer.</p>
+                </div>
+              </div>
+              <form id="customer-form" class="form-stack">
+                <div class="form-grid">
+                  <label class="form-field">
+                    <span>Customer Name</span>
+                    <input id="customer-name" type="text" required>
+                  </label>
+                  <label class="form-field">
+                    <span>Customer Code</span>
+                    <input id="customer-code" type="text">
+                  </label>
+                  <label class="form-field">
+                    <span>Customer Map Link</span>
+                    <input id="customer-map-link" type="url">
+                  </label>
+                  <label class="form-field">
+                    <span>Customer Personal Contact Name</span>
+                    <input id="customer-contact-name" type="text">
+                  </label>
+                  <label class="form-field">
+                    <span>Customer Personal Contact Number</span>
+                    <input id="customer-contact-number" type="text">
+                  </label>
+                </div>
+
+                <div class="subsection">
+                  <h4>Billing Information</h4>
+                  <div class="form-grid">
+                    <label class="form-field">
+                      <span>Name of Organization</span>
+                      <input id="billing-organization" type="text">
+                    </label>
+                    <label class="form-field form-field--full">
+                      <span>Full Address</span>
+                      <textarea id="billing-address" rows="3"></textarea>
+                    </label>
+                    <label class="form-field">
+                      <span>GST</span>
+                      <input id="billing-gst" type="text">
+                    </label>
+                    <label class="form-field">
+                      <span>Phone</span>
+                      <input id="billing-phone" type="text">
+                    </label>
+                    <label class="form-field">
+                      <span>Payment Cycle</span>
+                      <input id="billing-payment-cycle" type="text" placeholder="e.g. 30 days">
+                    </label>
+                  </div>
+                </div>
+
+                <div class="subsection">
+                  <div class="subsection__heading">
+                    <h4>Chef's Info</h4>
+                    <button id="add-chef" class="secondary-button" type="button">Add Chef</button>
+                  </div>
+                  <div id="chef-list" class="form-stack"></div>
+                </div>
+
+                <div class="form-actions">
+                  <button class="secondary-button primary-button" type="submit">Save Customer Draft</button>
+                  <button id="reset-customer-form" class="secondary-button" type="button">New Customer</button>
+                </div>
+              </form>
+            </section>
+          </div>
+        </div>
+
+        <div id="skus-app" class="app-panel hidden">
+          <div class="two-column-layout">
+            <section class="card">
+              <div class="card__header">
+                <div>
+                  <h3>SKU Catalog</h3>
+                  <p>Add, edit, and remove SKUs.</p>
+                </div>
+              </div>
+              <div id="sku-list" class="list-stack"></div>
+            </section>
+
+            <section class="card">
+              <div class="card__header">
+                <div>
+                  <h3 id="sku-form-title">New SKU</h3>
+                  <p>Use this form to maintain the active sellable catalog.</p>
+                </div>
+              </div>
+              <form id="sku-form" class="form-stack">
+                <div class="form-grid">
+                  <label class="form-field form-field--full">
+                    <span>SKU Name</span>
+                    <input id="sku-name" type="text" required>
+                  </label>
+                  <label class="form-field">
+                    <span>Price</span>
+                    <input id="sku-price" type="number" min="0" step="0.01" required>
+                  </label>
+                  <label class="form-field">
+                    <span>HSN</span>
+                    <input id="sku-hsn" type="text" required>
+                  </label>
+                </div>
+                <div class="form-actions">
+                  <button class="secondary-button primary-button" type="submit">Save SKU Draft</button>
+                  <button id="reset-sku-form" class="secondary-button" type="button">New SKU</button>
+                </div>
+              </form>
+            </section>
+          </div>
+        </div>
+
+        <div id="ordering-app" class="app-panel hidden">
+          <div class="content-stack">
+            <div class="two-column-layout">
+              <section class="card">
+                <div class="card__header">
+                  <div>
+                    <h3>Create Order</h3>
+                    <p>Save the order first. Generate the invoice from saved orders only.</p>
+                  </div>
+                </div>
+                <form id="order-form" class="form-stack">
+                  <div class="form-grid">
+                    <label class="form-field">
+                      <span>Customer</span>
+                      <select id="order-customer"></select>
+                    </label>
+                    <label class="form-field">
+                      <span>Customer Name</span>
+                      <input id="order-customer-name" type="text" required>
+                    </label>
+                    <label class="form-field">
+                      <span>Customer Code</span>
+                      <input id="order-customer-code" type="text" required>
+                    </label>
+                    <label class="form-field">
+                      <span>Date</span>
+                      <input id="order-date" type="date" required>
+                    </label>
+                    <label class="form-field">
+                      <span>Invoice #</span>
+                      <input id="order-invoice-number" type="text" required>
+                    </label>
+                    <label class="form-field">
+                      <span>Due Date</span>
+                      <input id="order-due-date" type="date" required>
+                    </label>
+                  </div>
+
+                  <div class="subsection">
+                    <h4>Billing From Invoice</h4>
+                    <div class="form-grid">
+                      <label class="form-field">
+                        <span>Name of Organization</span>
+                        <input id="order-billing-organization" type="text">
+                      </label>
+                      <label class="form-field form-field--full">
+                        <span>Full Address</span>
+                        <textarea id="order-billing-address" rows="3"></textarea>
+                      </label>
+                      <label class="form-field">
+                        <span>GST</span>
+                        <input id="order-billing-gst" type="text">
+                      </label>
+                      <label class="form-field">
+                        <span>Phone</span>
+                        <input id="order-billing-phone" type="text">
+                      </label>
+                      <label class="form-field">
+                        <span>Payment Cycle</span>
+                        <input id="order-billing-payment-cycle" type="text">
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="subsection">
+                    <div class="subsection__heading">
+                      <h4>Products</h4>
+                      <button id="add-order-item" class="secondary-button" type="button">Add Product</button>
+                    </div>
+                    <div id="order-items" class="form-stack"></div>
+                  </div>
+
+                  <div class="form-grid">
+                    <label class="form-field">
+                      <span>Discount % on Grand Total</span>
+                      <input id="order-discount-percent" type="number" min="0" max="100" step="0.01" value="0">
+                    </label>
+                  </div>
+
+                  <div class="form-actions">
+                    <button class="secondary-button primary-button" type="submit">Save Order Draft</button>
+                    <button id="reset-order-form" class="secondary-button" type="button">New Order</button>
+                  </div>
+                </form>
+              </section>
+
+              <section class="card">
+                <div class="card__header">
+                  <div>
+                    <h3>Saved Orders</h3>
+                    <p>Generate invoice previews from saved orders.</p>
+                  </div>
+                </div>
+                <div id="orders-list" class="list-stack"></div>
+              </section>
             </div>
 
-            <div class="config-toolbar">
-              <label class="inline-field">
-                <span>Black tray multiplier</span>
-                <input id="black-tray-multiplier" type="number" min="0" step="0.1" value="2.5">
-              </label>
-            </div>
-
-            <div class="table-shell">
-              <table id="config-table" class="data-table config-table"></table>
-            </div>
-          </section>
-
-          <section class="card">
-            <div class="card__header">
-              <div>
-                <h3>Seeding Plan</h3>
-                <p>Each column shows the seeding date and the default 11-day reference below it.</p>
+            <section class="card">
+              <div class="card__header">
+                <div>
+                  <h3>Invoice Preview</h3>
+                  <p>Use the browser print dialog to download the invoice as PDF.</p>
+                </div>
+                <button id="download-invoice" class="secondary-button" type="button">Download PDF</button>
               </div>
-            </div>
-            <div class="table-shell">
-              <table id="seeding-table" class="data-table seeding-table"></table>
-            </div>
-          </section>
+              <div id="invoice-preview" class="invoice-preview empty-state">
+                Save an order, then choose Generate Invoice from the saved orders list.
+              </div>
+            </section>
+          </div>
+        </div>
 
-          <section class="card">
-            <div class="card__header">
-              <div>
-                <h3>Projected Boxes</h3>
-                <p>Output is grouped by harvest date using each crop's actual harvest days and tray yield.</p>
-              </div>
-            </div>
-            <div class="table-shell">
-              <table id="boxes-table" class="data-table boxes-table"></table>
-            </div>
-          </section>
+        <div id="analytics-app" class="app-panel hidden">
+          <div class="summary-grid">
+            <article class="summary-card">
+              <span>Sales in last 14 days</span>
+              <strong id="analytics-sales-14">₹ 0.00</strong>
+            </article>
+            <article class="summary-card">
+              <span>Sales this month</span>
+              <strong id="analytics-sales-month">₹ 0.00</strong>
+            </article>
+            <article class="summary-card">
+              <span>Forecast boxes next 14 days</span>
+              <strong id="analytics-forecast-total">0</strong>
+            </article>
+          </div>
 
-          <section class="card">
-            <div class="card__header calendar-header">
-              <div>
-                <h3 id="calendar-title">Monthly Harvest Calendar</h3>
-                <p>Small labels show total boxes plus crop-level breakdown for each date.</p>
+          <div class="content-stack">
+            <section class="card">
+              <div class="card__header">
+                <div>
+                  <h3>Sales Trend</h3>
+                  <p>Manhattan-style bars across daily, monthly, and yearly sales.</p>
+                </div>
               </div>
-              <div class="calendar-actions">
-                <button id="prev-month" class="icon-button" type="button" aria-label="Previous month">&lt;</button>
-                <button id="next-month" class="icon-button" type="button" aria-label="Next month">&gt;</button>
+              <div class="analytics-grid">
+                <div class="analytics-card">
+                  <h4>Daily</h4>
+                  <div id="analytics-daily-chart" class="manhattan-chart"></div>
+                </div>
+                <div class="analytics-card">
+                  <h4>Monthly</h4>
+                  <div id="analytics-monthly-chart" class="manhattan-chart"></div>
+                </div>
+                <div class="analytics-card">
+                  <h4>Yearly</h4>
+                  <div id="analytics-yearly-chart" class="manhattan-chart"></div>
+                </div>
               </div>
-            </div>
-            <div id="calendar" class="calendar"></div>
-          </section>
+            </section>
+
+            <section class="card">
+              <div class="card__header">
+                <div>
+                  <h3>Two-Week Demand Forecast</h3>
+                  <p>Forecast mirrors the last two weeks of ordering history into the next two weeks.</p>
+                </div>
+              </div>
+              <div class="analytics-forecast-grid">
+                <div class="analytics-card">
+                  <h4>Forecast by Day</h4>
+                  <div id="analytics-forecast-days" class="forecast-list"></div>
+                </div>
+                <div class="analytics-card">
+                  <h4>Forecast by SKU</h4>
+                  <div id="analytics-forecast-skus" class="forecast-list"></div>
+                </div>
+              </div>
+            </section>
+          </div>
         </div>
       </section>
     </main>
   </div>
 
+  <script src="firebase-config.js"></script>
+  <script src="migration-data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

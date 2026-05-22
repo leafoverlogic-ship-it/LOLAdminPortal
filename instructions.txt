@@ -3,50 +3,13 @@ flutter clean
 flutter pub get
 flutter run --release -d chrome
 
-|| WINDOWS BUILD FROM THIS REPO ||
-Do not run `flutter build windows` directly from `H:\My Drive\...`
-Reason: Windows plugin symlinks fail on this Google Drive-mounted path
-
-Prerequisite:
-Enable Windows Developer Mode
-Command: start ms-settings:developers
-
-Build command:
-powershell -ExecutionPolicy Bypass -File scripts\build_windows_local.ps1
-
-What the script does:
-Copies the project to a local folder on C:
-Runs `flutter pub get`
-Runs `flutter build windows`
-Copies release output back into `build_local_windows\Release`
-
 || REDEPLOYMENT TO FIREBASE || (DONT DO THIS)
-flutter build web
+npm install -g firebase-tools
+firebase login
+--flutter build web
 firebase deploy --only hosting
 
 || GIT COMMIT ||
 git add -A
 git commit -m "<date>"
 git push
-
-|| Beat Plan Export ||
-Visit Date - date from last activity log
-Sales Person - name of the sales person assigned to this (use same logic - using subareaid of client, find the assignedSE id in Subareas, then find the name of the assigned SE from Users)
-Type Of Call - type from last activity log
-Category - category of the customer from Clients table 
-Type of Institution - from Clients table 
-Destination - Subarea name. get subarea id from CLients and basedon this id get subareaname from subareas table- ok 
-City - area name. get the subarea id from Clients and get the area id from Subareas table, then get the area name from Areas table 
-Customer Code - from Clients
-Customer Name - Doc_Name or Pharmacy_Name whatever is available
-Address1 - based on what Customer Name is available, (if its doc then institute, if its pharmacy then pharmacy)
-Address2 - based on what Customer Name is available, (if its doc then institute, if its pharmacy then pharmacy)
-Landmark - based on what Customer Name is available, (if its doc then institute, if its pharmacy then pharmacy)
-Mobile No 1 - based on Customer Name is available, (if its doc then institute, if its pharmacy then pharmacy)
-Mobile No 2 - based on Customer Name is available, (if its doc then institute, if its pharmacy then pharmacy)
-Order Type - "NA" for now
-Order Details - "NA" for now
-Order Amount - "NA" for now
-Visit Brief - message in the last activity log
-Call Response - response in the last activity log
-Followup Date - followup date from Clients
