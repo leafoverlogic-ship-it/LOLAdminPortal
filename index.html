@@ -220,8 +220,19 @@
                       <input id="billing-phone" type="text">
                     </label>
                     <label class="form-field">
-                      <span>Payment Cycle</span>
-                      <input id="billing-payment-cycle" type="text" placeholder="e.g. 30 days">
+                      <span>Billing Terms Type</span>
+                      <select id="billing-payment-cycle-type">
+                        <option value="days">Days from invoice</option>
+                        <option value="designated_day">Designated day of month</option>
+                      </select>
+                    </label>
+                    <label class="form-field" id="billing-payment-cycle-days-field">
+                      <span>Billing Days</span>
+                      <input id="billing-payment-cycle-days" type="number" min="1" step="1" placeholder="e.g. 30">
+                    </label>
+                    <label class="form-field hidden" id="billing-payment-cycle-day-field">
+                      <span>Designated Day of Month</span>
+                      <input id="billing-payment-cycle-day-of-month" type="number" min="1" max="31" step="1" placeholder="e.g. 25">
                     </label>
                   </div>
                 </div>
@@ -299,12 +310,8 @@
                 <form id="order-form" class="form-stack">
                   <div class="form-grid">
                     <label class="form-field">
-                      <span>Customer</span>
-                      <select id="order-customer"></select>
-                    </label>
-                    <label class="form-field">
                       <span>Customer Name</span>
-                      <input id="order-customer-name" type="text" required>
+                      <select id="order-customer"></select>
                     </label>
                     <label class="form-field">
                       <span>Customer Code</span>
@@ -344,8 +351,8 @@
                         <input id="order-billing-phone" type="text">
                       </label>
                       <label class="form-field">
-                        <span>Payment Cycle</span>
-                        <input id="order-billing-payment-cycle" type="text">
+                        <span>Billing Terms</span>
+                        <input id="order-billing-payment-cycle" type="text" readonly>
                       </label>
                     </div>
                   </div>

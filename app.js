@@ -1,6 +1,7 @@
 const DEFAULT_REFERENCE_HARVEST_DAYS = 11;
 const DEFAULT_BLACK_TRAY_MULTIPLIER = 2.5;
-const APP_VERSION = "v1.3.2";
+const ORDERS_PAGE_SIZE = 10;
+const APP_VERSION = "v1.3.30";
 const firebaseSettings = window.firebaseSettings || { enabled: false, config: {}, statePath: "adminPortal/yieldAvailability" };
 const migrationData = window.migrationData || { customers: [], orders: [], ordersPath: "" };
 const migrationSkuAliases = {
@@ -43,6 +44,9 @@ let editingCustomerId = null;
 let editingSkuId = null;
 let editingOrderId = null;
 let currentInvoiceOrderId = null;
+let currentOrdersPage = 1;
+let expandedOrderId = null;
+let activeProjectedBoxTooltipKey = "";
 
 const landingView = document.getElementById("landing-view");
 const appView = document.getElementById("app-view");
@@ -91,6 +95,11 @@ const chefListElement = document.getElementById("chef-list");
 const addChefButton = document.getElementById("add-chef");
 const resetCustomerFormButton = document.getElementById("reset-customer-form");
 const customerFormTitleElement = document.getElementById("customer-form-title");
+const billingPaymentCycleTypeInput = document.getElementById("billing-payment-cycle-type");
+const billingPaymentCycleDaysField = document.getElementById("billing-payment-cycle-days-field");
+const billingPaymentCycleDaysInput = document.getElementById("billing-payment-cycle-days");
+const billingPaymentCycleDayField = document.getElementById("billing-payment-cycle-day-field");
+const billingPaymentCycleDayInput = document.getElementById("billing-payment-cycle-day-of-month");
 
 const skuListElement = document.getElementById("sku-list");
 const skuForm = document.getElementById("sku-form");
@@ -99,7 +108,6 @@ const skuFormTitleElement = document.getElementById("sku-form-title");
 
 const orderForm = document.getElementById("order-form");
 const orderCustomerSelect = document.getElementById("order-customer");
-const orderCustomerNameInput = document.getElementById("order-customer-name");
 const orderCustomerCodeInput = document.getElementById("order-customer-code");
 const orderDateInput = document.getElementById("order-date");
 const orderInvoiceNumberInput = document.getElementById("order-invoice-number");
@@ -140,13 +148,21 @@ blackTrayMultiplierInput.addEventListener("change", handleBlackTrayMultiplierInp
 customerForm.addEventListener("submit", handleCustomerSubmit);
 addChefButton.addEventListener("click", () => addChefRow());
 resetCustomerFormButton.addEventListener("click", resetCustomerForm);
+billingPaymentCycleTypeInput.addEventListener("change", syncCustomerBillingTermFields);
 skuForm.addEventListener("submit", handleSkuSubmit);
 resetSkuFormButton.addEventListener("click", resetSkuForm);
 orderCustomerSelect.addEventListener("change", handleOrderCustomerSelection);
+orderDateInput.addEventListener("change", updateOrderDueDateFromSelection);
 addOrderItemButton.addEventListener("click", () => addOrderItemRow());
 orderForm.addEventListener("submit", handleOrderSubmit);
 resetOrderFormButton.addEventListener("click", resetOrderForm);
 downloadInvoiceButton.addEventListener("click", handleDownloadInvoice);
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".box-cell--interactive") && activeProjectedBoxTooltipKey) {
+    activeProjectedBoxTooltipKey = "";
+    renderBoxesTable();
+  }
+});
 
 renderAll();
 initRemoteState();
@@ -275,6 +291,7 @@ function renderSeedingTable() {
 
 function renderBoxesTable() {
   const harvestDates = getHarvestDatesForWindow();
+  const anticipatedDemand = buildAnticipatedHarvestDemand(state.orders, harvestDates);
   boxesTable.innerHTML = `
     <thead>
       <tr>
@@ -286,15 +303,37 @@ function renderBoxesTable() {
       ${state.crops.map((crop) => `
         <tr>
           <td class="sticky-column">${escapeHtml(crop.name)}</td>
-          ${harvestDates.map((date) => `<td>${formatNumber(getCropBoxesForHarvestDate(crop, date))}</td>`).join("")}
+          ${harvestDates.map((date) => {
+            const actualBoxes = getCropBoxesForHarvestDate(crop, date);
+            const anticipatedBoxes = getAnticipatedBoxesForCell(anticipatedDemand.cropByDate, crop.id, date);
+            return renderProjectedBoxesCell(
+              actualBoxes,
+              anticipatedBoxes,
+              `${crop.id}|${toDateKey(date)}`,
+              buildAnticipatedTrayPlan(crop, date, actualBoxes, anticipatedBoxes),
+              shouldUnderlineAnticipatedDemand(crop, date, actualBoxes, anticipatedBoxes),
+            );
+          }).join("")}
         </tr>
       `).join("")}
       <tr class="totals-row">
         <td class="sticky-column">Total Boxes</td>
-        ${harvestDates.map((date) => `<td>${formatNumber(getTotalBoxesForHarvestDate(date))}</td>`).join("")}
+        ${harvestDates.map((date) => renderProjectedBoxesCell(
+          getTotalBoxesForHarvestDate(date),
+          getAnticipatedBoxesForCell(anticipatedDemand.totalByDate, "total", date),
+          `total|${toDateKey(date)}`,
+          "",
+          false,
+        )).join("")}
       </tr>
     </tbody>
   `;
+  boxesTable.querySelectorAll(".box-cell__trigger").forEach((button) => {
+    button.addEventListener("click", handleProjectedBoxTooltipToggle);
+  });
+  boxesTable.querySelectorAll(".box-cell__action").forEach((button) => {
+    button.addEventListener("click", handleProjectedBoxAction);
+  });
 }
 
 function renderCustomers() {
@@ -366,35 +405,76 @@ function renderOrdering() {
 }
 
 function renderOrderCustomerOptions() {
-  orderCustomerSelect.innerHTML = `<option value="">New customer from invoice</option>${state.customers.map((customer) => `<option value="${customer.id}">${escapeHtml(customer.customerName)}</option>`).join("")}`;
+  orderCustomerSelect.innerHTML = `<option value="">Select customer</option>${state.customers.map((customer) => `<option value="${customer.id}">${escapeHtml(customer.customerName)}</option>`).join("")}`;
 }
 
 function renderOrdersList() {
   const sortedOrders = getOrdersSortedNewestFirst();
+  const totalPages = Math.max(1, Math.ceil(sortedOrders.length / ORDERS_PAGE_SIZE));
+  currentOrdersPage = Math.max(1, Math.min(currentOrdersPage, totalPages));
+  const startIndex = (currentOrdersPage - 1) * ORDERS_PAGE_SIZE;
+  const pagedOrders = sortedOrders.slice(startIndex, startIndex + ORDERS_PAGE_SIZE);
+
+  if (expandedOrderId && !pagedOrders.some((order) => order.id === expandedOrderId)) {
+    expandedOrderId = null;
+  }
+
   ordersListElement.innerHTML = sortedOrders.length
-    ? sortedOrders.map((order) => `
-      <article class="list-card">
-        <div class="list-card__header">
-          <div>
-            <h4>${escapeHtml(order.invoiceNumber)} | ${escapeHtml(order.customerName)}</h4>
-            <div class="list-card__meta">
-              <span>Date: ${formatInvoiceDate(order.date)}</span>
-              <span>Total: ${formatCurrency(order.total)}</span>
+    ? `
+      ${pagedOrders.map((order) => {
+        const isExpanded = expandedOrderId === order.id;
+        const displayCustomerName = getOrderDisplayCustomerName(order);
+        return `
+          <article class="list-card order-card ${isExpanded ? "order-card--expanded" : ""}">
+            <button class="order-card__summary" type="button" data-toggle-order="${order.id}" aria-expanded="${isExpanded ? "true" : "false"}">
+              <div>
+                <h4>${escapeHtml(order.invoiceNumber)} | ${escapeHtml(displayCustomerName)}</h4>
+                <div class="list-card__meta">
+                  <span>Date: ${formatInvoiceDate(order.date)}</span>
+                  <span>Total: ${formatCurrency(order.total)}</span>
+                </div>
+              </div>
+              <span class="order-card__indicator">${isExpanded ? "Collapse" : "Expand"}</span>
+            </button>
+            <div class="order-card__details ${isExpanded ? "" : "hidden"}">
+              <div class="list-card__details">
+                <span>Customer Code: ${escapeHtml(order.customerCode || "-")}</span>
+                <span>Items: ${(order.items || []).length}</span>
+                <span>Due Date: ${formatInvoiceDate(order.dueDate)}</span>
+              </div>
+              <div class="list-card__actions">
+                <button class="list-action" type="button" data-edit-order="${order.id}">Edit</button>
+                <button class="list-action" type="button" data-generate-invoice="${order.id}">Generate Invoice</button>
+                <button class="list-action list-action--danger" type="button" data-delete-order="${order.id}">Delete</button>
+              </div>
             </div>
-          </div>
-          <div class="list-card__actions">
-            <button class="list-action" type="button" data-edit-order="${order.id}">Edit</button>
-            <button class="list-action" type="button" data-generate-invoice="${order.id}">Generate Invoice</button>
-            <button class="list-action list-action--danger" type="button" data-delete-order="${order.id}">Delete</button>
-          </div>
-        </div>
-      </article>
-    `).join("")
+          </article>
+        `;
+      }).join("")}
+      <div class="list-pagination">
+        <button class="secondary-button" type="button" data-orders-page="${currentOrdersPage - 1}" ${currentOrdersPage === 1 ? "disabled" : ""}>Previous</button>
+        <span class="list-pagination__status">Page ${currentOrdersPage} of ${totalPages}</span>
+        <button class="secondary-button" type="button" data-orders-page="${currentOrdersPage + 1}" ${currentOrdersPage === totalPages ? "disabled" : ""}>Next</button>
+      </div>
+    `
     : `<div class="empty-state">No orders saved yet.</div>`;
 
+  ordersListElement.querySelectorAll("[data-toggle-order]").forEach((button) => {
+    button.addEventListener("click", () => {
+      expandedOrderId = expandedOrderId === button.dataset.toggleOrder ? null : button.dataset.toggleOrder;
+      renderOrdersList();
+    });
+  });
   ordersListElement.querySelectorAll("[data-edit-order]").forEach((button) => button.addEventListener("click", () => startEditingOrder(button.dataset.editOrder)));
   ordersListElement.querySelectorAll("[data-generate-invoice]").forEach((button) => button.addEventListener("click", () => generateInvoiceFromOrder(button.dataset.generateInvoice)));
   ordersListElement.querySelectorAll("[data-delete-order]").forEach((button) => button.addEventListener("click", () => deleteOrder(button.dataset.deleteOrder)));
+  ordersListElement.querySelectorAll("[data-orders-page]").forEach((button) => {
+    button.addEventListener("click", () => {
+      currentOrdersPage = toPositiveInteger(button.dataset.ordersPage, currentOrdersPage);
+      expandedOrderId = null;
+      renderOrdersList();
+    });
+  });
 }
 
 function renderAnalytics() {
@@ -429,6 +509,114 @@ function renderAnalytics() {
   analyticsForecastTotalElement.textContent = formatNumber(forecast.totalBoxes);
   renderForecastDays(forecast.byDay);
   renderForecastSkus(forecast.bySku);
+}
+
+function getOrderDisplayCustomerName(order) {
+  const matchedCustomer = state.customers.find((customer) =>
+    (order.customerId && customer.id === order.customerId)
+    || (order.customerCode && customer.customerCode === order.customerCode)
+  );
+  return matchedCustomer?.customerName || order.customerName || order.billing?.organization || "Unknown Customer";
+}
+
+function normalizeBilling(billing = {}) {
+  const paymentCycleText = String(billing.paymentCycle || "").trim();
+  let paymentCycleType = billing.paymentCycleType === "designated_day" ? "designated_day" : "days";
+  let paymentCycleDays = toPositiveInteger(billing.paymentCycleDays, 0);
+  let paymentCycleDayOfMonth = toPositiveInteger(billing.paymentCycleDayOfMonth, 0);
+
+  if (!billing.paymentCycleType && paymentCycleText) {
+    const dayMatch = paymentCycleText.match(/(\d+)/);
+    if (paymentCycleText.toLowerCase().includes("month")) {
+      paymentCycleType = "designated_day";
+      paymentCycleDayOfMonth = dayMatch ? toPositiveInteger(dayMatch[1], 25) : 25;
+    } else if (dayMatch) {
+      paymentCycleType = "days";
+      paymentCycleDays = toPositiveInteger(dayMatch[1], 30);
+    }
+  }
+
+  if (paymentCycleType === "designated_day") {
+    paymentCycleDayOfMonth = clampDayOfMonth(paymentCycleDayOfMonth || 25);
+    paymentCycleDays = 0;
+  } else {
+    paymentCycleDays = toPositiveInteger(paymentCycleDays || paymentCycleText, 30);
+    paymentCycleDayOfMonth = 0;
+  }
+
+  return {
+    organization: billing.organization || "",
+    address: billing.address || "",
+    gst: billing.gst || "",
+    phone: billing.phone || "",
+    paymentCycleType,
+    paymentCycleDays,
+    paymentCycleDayOfMonth,
+    paymentCycle: formatBillingTermLabel({
+      paymentCycleType,
+      paymentCycleDays,
+      paymentCycleDayOfMonth,
+    }),
+  };
+}
+
+function formatBillingTermLabel(billing) {
+  if (billing.paymentCycleType === "designated_day") {
+    return `Due on ${billing.paymentCycleDayOfMonth}${getOrdinalSuffix(billing.paymentCycleDayOfMonth)} of the month`;
+  }
+  return `${billing.paymentCycleDays} days`;
+}
+
+function updateOrderDueDateFromSelection() {
+  if (editingOrderId) return;
+  const customer = state.customers.find((item) => item.id === orderCustomerSelect.value);
+  const billing = normalizeBilling(customer?.billing || {});
+  const invoiceDate = orderDateInput.value || toInputDate(today);
+  orderDueDateInput.value = computeDueDateForBilling(billing, invoiceDate);
+}
+
+function computeDueDateForBilling(billing, invoiceDate) {
+  const date = startOfDay(new Date(invoiceDate));
+  if (Number.isNaN(date.getTime())) {
+    return toInputDate(addDays(today, 30));
+  }
+  if (billing.paymentCycleType === "designated_day") {
+    const targetDay = clampDayOfMonth(billing.paymentCycleDayOfMonth || 25);
+    let dueYear = date.getFullYear();
+    let dueMonth = date.getMonth();
+    if (date.getDate() >= targetDay) {
+      dueMonth += 1;
+      if (dueMonth > 11) {
+        dueMonth = 0;
+        dueYear += 1;
+      }
+    }
+    const lastDay = new Date(dueYear, dueMonth + 1, 0).getDate();
+    return toInputDate(new Date(dueYear, dueMonth, Math.min(targetDay, lastDay)));
+  }
+  return toInputDate(addDays(date, toPositiveInteger(billing.paymentCycleDays, 30)));
+}
+
+function getInvoicePaymentTermsText(billing) {
+  const normalized = normalizeBilling(billing);
+  if (normalized.paymentCycleType === "designated_day") {
+    return `Total payment due on the ${normalized.paymentCycleDayOfMonth}${getOrdinalSuffix(normalized.paymentCycleDayOfMonth)} of the applicable month`;
+  }
+  return `Total payment due in ${normalized.paymentCycleDays} days`;
+}
+
+function clampDayOfMonth(day) {
+  return Math.max(1, Math.min(31, toPositiveInteger(day, 25)));
+}
+
+function getOrdinalSuffix(day) {
+  const mod100 = day % 100;
+  if (mod100 >= 11 && mod100 <= 13) return "th";
+  const mod10 = day % 10;
+  if (mod10 === 1) return "st";
+  if (mod10 === 2) return "nd";
+  if (mod10 === 3) return "rd";
+  return "th";
 }
 
 function openApp(appKey) {
@@ -477,6 +665,7 @@ function handleSeedingInput(event) {
 
 function handleCustomerSubmit(event) {
   event.preventDefault();
+  const billing = buildBillingFromCustomerForm();
   const payload = {
     id: editingCustomerId || createId("customer"),
     customerName: document.getElementById("customer-name").value.trim(),
@@ -484,13 +673,7 @@ function handleCustomerSubmit(event) {
     mapLink: document.getElementById("customer-map-link").value.trim(),
     contactName: document.getElementById("customer-contact-name").value.trim(),
     contactNumber: document.getElementById("customer-contact-number").value.trim(),
-    billing: {
-      organization: document.getElementById("billing-organization").value.trim(),
-      address: document.getElementById("billing-address").value.trim(),
-      gst: document.getElementById("billing-gst").value.trim(),
-      phone: document.getElementById("billing-phone").value.trim(),
-      paymentCycle: document.getElementById("billing-payment-cycle").value.trim(),
-    },
+    billing,
     chefs: collectChefRows(),
   };
   upsertCustomer(payload);
@@ -525,17 +708,21 @@ function collectChefRows() {
 function startEditingCustomer(customerId) {
   const customer = state.customers.find((item) => item.id === customerId);
   if (!customer) return;
+  const billing = normalizeBilling(customer.billing);
   editingCustomerId = customerId;
   document.getElementById("customer-name").value = customer.customerName;
   document.getElementById("customer-code").value = customer.customerCode || "";
   document.getElementById("customer-map-link").value = customer.mapLink;
   document.getElementById("customer-contact-name").value = customer.contactName;
   document.getElementById("customer-contact-number").value = customer.contactNumber;
-  document.getElementById("billing-organization").value = customer.billing.organization;
-  document.getElementById("billing-address").value = customer.billing.address;
-  document.getElementById("billing-gst").value = customer.billing.gst;
-  document.getElementById("billing-phone").value = customer.billing.phone;
-  document.getElementById("billing-payment-cycle").value = customer.billing.paymentCycle;
+  document.getElementById("billing-organization").value = billing.organization;
+  document.getElementById("billing-address").value = billing.address;
+  document.getElementById("billing-gst").value = billing.gst;
+  document.getElementById("billing-phone").value = billing.phone;
+  billingPaymentCycleTypeInput.value = billing.paymentCycleType;
+  billingPaymentCycleDaysInput.value = billing.paymentCycleDays ? String(billing.paymentCycleDays) : "";
+  billingPaymentCycleDayInput.value = billing.paymentCycleDayOfMonth ? String(billing.paymentCycleDayOfMonth) : "";
+  syncCustomerBillingTermFields();
   chefListElement.innerHTML = "";
   customer.chefs.forEach((chef) => addChefRow(chef));
 }
@@ -554,7 +741,29 @@ function resetCustomerForm() {
 
 function resetCustomerFormFields() {
   customerForm.reset();
+  billingPaymentCycleTypeInput.value = "days";
+  billingPaymentCycleDaysInput.value = "30";
+  billingPaymentCycleDayInput.value = "";
+  syncCustomerBillingTermFields();
   chefListElement.innerHTML = "";
+}
+
+function buildBillingFromCustomerForm() {
+  return normalizeBilling({
+    organization: document.getElementById("billing-organization").value.trim(),
+    address: document.getElementById("billing-address").value.trim(),
+    gst: document.getElementById("billing-gst").value.trim(),
+    phone: document.getElementById("billing-phone").value.trim(),
+    paymentCycleType: billingPaymentCycleTypeInput.value,
+    paymentCycleDays: billingPaymentCycleDaysInput.value,
+    paymentCycleDayOfMonth: billingPaymentCycleDayInput.value,
+  });
+}
+
+function syncCustomerBillingTermFields() {
+  const isDesignatedDay = billingPaymentCycleTypeInput.value === "designated_day";
+  billingPaymentCycleDaysField.classList.toggle("hidden", isDesignatedDay);
+  billingPaymentCycleDayField.classList.toggle("hidden", !isDesignatedDay);
 }
 
 function handleSkuSubmit(event) {
@@ -599,27 +808,31 @@ function resetSkuForm() {
 function handleOrderCustomerSelection() {
   const customer = state.customers.find((item) => item.id === orderCustomerSelect.value);
   if (!customer) {
-    orderCustomerNameInput.value = "";
     orderCustomerCodeInput.value = "";
     orderBillingOrganizationInput.value = "";
     orderBillingAddressInput.value = "";
     orderBillingGstInput.value = "";
     orderBillingPhoneInput.value = "";
     orderBillingPaymentCycleInput.value = "";
+    updateOrderDueDateFromSelection();
     return;
   }
-  orderCustomerNameInput.value = customer.customerName;
+  const billing = normalizeBilling(customer.billing);
   orderCustomerCodeInput.value = customer.customerCode || "";
-  orderBillingOrganizationInput.value = customer.billing.organization || "";
-  orderBillingAddressInput.value = customer.billing.address || "";
-  orderBillingGstInput.value = customer.billing.gst || "";
-  orderBillingPhoneInput.value = customer.billing.phone || "";
-  orderBillingPaymentCycleInput.value = customer.billing.paymentCycle || "";
+  orderBillingOrganizationInput.value = billing.organization || "";
+  orderBillingAddressInput.value = billing.address || "";
+  orderBillingGstInput.value = billing.gst || "";
+  orderBillingPhoneInput.value = billing.phone || "";
+  orderBillingPaymentCycleInput.value = billing.paymentCycle || "";
+  updateOrderDueDateFromSelection();
 }
 
-function addOrderItemRow(item = { skuId: "", quantity: 1 }) {
+function addOrderItemRow(item = { skuId: "", quantity: 1, price: "", amount: "" }) {
   const row = document.createElement("div");
   row.className = "order-item";
+  const initialQuantity = toPositiveInteger(item.quantity, 1) || 1;
+  const initialPrice = item.price !== undefined && item.price !== "" ? formatNumber(item.price) : "";
+  const initialAmount = item.amount !== undefined && item.amount !== "" ? formatNumber(item.amount) : "";
   row.innerHTML = `
     <label class="form-field">
       <span>Product</span>
@@ -627,12 +840,30 @@ function addOrderItemRow(item = { skuId: "", quantity: 1 }) {
     </label>
     <label class="form-field">
       <span>Quantity</span>
-      <input data-order-field="quantity" type="number" min="1" step="1" value="${item.quantity}">
+      <input data-order-field="quantity" type="number" min="1" step="1" value="${initialQuantity}">
+    </label>
+    <label class="form-field">
+      <span>MRP</span>
+      <input data-order-field="price" type="number" min="0" step="0.01" value="${initialPrice}" readonly>
+    </label>
+    <label class="form-field">
+      <span>Amount</span>
+      <input data-order-field="amount" type="number" min="0" step="0.01" value="${initialAmount}">
     </label>
     <button class="list-action list-action--danger" type="button">Remove</button>
   `;
+  const skuSelect = row.querySelector('[data-order-field="skuId"]');
+  const quantityInput = row.querySelector('[data-order-field="quantity"]');
+  const priceInput = row.querySelector('[data-order-field="price"]');
+  const amountInput = row.querySelector('[data-order-field="amount"]');
+
+  skuSelect.addEventListener("change", () => applyOrderItemDefaults(row, { resetPrice: true, resetAmount: true }));
+  quantityInput.addEventListener("input", () => applyOrderItemDefaults(row, { resetPrice: true, resetAmount: true }));
   row.querySelector("button").addEventListener("click", () => row.remove());
   orderItemsElement.appendChild(row);
+  if (!initialPrice && !initialAmount) {
+    applyOrderItemDefaults(row, { resetPrice: true, resetAmount: true });
+  }
 }
 
 function refreshOrderItemSkuOptions() {
@@ -647,19 +878,44 @@ function renderSkuOptions(selectedId) {
   return `<option value="">Select SKU</option>${state.skus.map((sku) => `<option value="${sku.id}" ${sku.id === selectedId ? "selected" : ""}>${escapeHtml(sku.name)}</option>`).join("")}`;
 }
 
+function applyOrderItemDefaults(row, { resetPrice = false, resetAmount = false } = {}) {
+  const sku = state.skus.find((item) => item.id === row.querySelector('[data-order-field="skuId"]').value);
+  const quantityInput = row.querySelector('[data-order-field="quantity"]');
+  const priceInput = row.querySelector('[data-order-field="price"]');
+  const amountInput = row.querySelector('[data-order-field="amount"]');
+  const quantity = Math.max(1, toPositiveInteger(quantityInput.value, 1));
+  quantityInput.value = String(quantity);
+
+  if (sku && resetPrice) {
+    priceInput.value = formatNumber(sku.price);
+  }
+
+  const price = toPositiveNumber(priceInput.value, sku?.price || 0);
+  if (resetAmount) {
+    amountInput.value = formatNumber(price * quantity);
+  }
+}
+
 function handleOrderSubmit(event) {
   event.preventDefault();
+  const selectedCustomer = state.customers.find((item) => item.id === orderCustomerSelect.value);
+  if (!selectedCustomer) {
+    setSyncStatus("Select a customer from the list");
+    return;
+  }
   const items = Array.from(orderItemsElement.querySelectorAll(".order-item")).map((row) => {
     const sku = state.skus.find((item) => item.id === row.querySelector('[data-order-field="skuId"]').value);
     const quantity = toPositiveInteger(row.querySelector('[data-order-field="quantity"]').value, 0);
+    const price = toPositiveNumber(row.querySelector('[data-order-field="price"]').value, sku?.price || 0);
+    const amount = toPositiveNumber(row.querySelector('[data-order-field="amount"]').value, price * quantity);
     if (!sku || quantity <= 0) return null;
     return {
       skuId: sku.id,
       description: sku.name,
       hsn: sku.hsn,
       quantity,
-      price: sku.price,
-      amount: sku.price * quantity,
+      price,
+      amount,
     };
   }).filter(Boolean);
   if (!items.length) {
@@ -667,21 +923,21 @@ function handleOrderSubmit(event) {
     return;
   }
 
+  const normalizedBilling = normalizeBilling({
+    organization: orderBillingOrganizationInput.value.trim(),
+    address: orderBillingAddressInput.value.trim(),
+    gst: orderBillingGstInput.value.trim(),
+    phone: orderBillingPhoneInput.value.trim(),
+    paymentCycle: orderBillingPaymentCycleInput.value.trim(),
+    paymentCycleType: selectedCustomer.billing?.paymentCycleType,
+    paymentCycleDays: selectedCustomer.billing?.paymentCycleDays,
+    paymentCycleDayOfMonth: selectedCustomer.billing?.paymentCycleDayOfMonth,
+  });
+
   const customerPayload = {
-    id: orderCustomerSelect.value || createId("customer"),
-    customerName: orderCustomerNameInput.value.trim(),
+    ...selectedCustomer,
     customerCode: orderCustomerCodeInput.value.trim(),
-    mapLink: "",
-    contactName: "",
-    contactNumber: "",
-    billing: {
-      organization: orderBillingOrganizationInput.value.trim(),
-      address: orderBillingAddressInput.value.trim(),
-      gst: orderBillingGstInput.value.trim(),
-      phone: orderBillingPhoneInput.value.trim(),
-      paymentCycle: orderBillingPaymentCycleInput.value.trim(),
-    },
-    chefs: [],
+    billing: normalizedBilling,
   };
   upsertCustomer(customerPayload);
 
@@ -694,10 +950,10 @@ function handleOrderSubmit(event) {
     customerId: customerPayload.id,
     customerName: customerPayload.customerName,
     customerCode: customerPayload.customerCode,
-    billing: { ...customerPayload.billing },
-    date: orderDateInput.value,
-    invoiceNumber: orderInvoiceNumberInput.value.trim(),
-    dueDate: orderDueDateInput.value,
+    billing: { ...normalizedBilling },
+    date: orderDateInput.value || toInputDate(today),
+    invoiceNumber: orderInvoiceNumberInput.value.trim() || getNextInvoiceNumber(),
+    dueDate: computeDueDateForBilling(normalizedBilling, orderDateInput.value || toInputDate(today)),
     discountPercent,
     subtotal,
     discountAmount,
@@ -709,6 +965,8 @@ function handleOrderSubmit(event) {
   if (index >= 0) state.orders[index] = orderPayload;
   else state.orders.push(orderPayload);
 
+  currentOrdersPage = 1;
+  expandedOrderId = orderPayload.id;
   editingOrderId = null;
   resetOrderForm();
   renderCustomers();
@@ -720,9 +978,9 @@ function handleOrderSubmit(event) {
 function startEditingOrder(orderId) {
   const order = state.orders.find((item) => item.id === orderId);
   if (!order) return;
+  expandedOrderId = orderId;
   editingOrderId = order.id;
   orderCustomerSelect.value = order.customerId || "";
-  orderCustomerNameInput.value = order.customerName;
   orderCustomerCodeInput.value = order.customerCode || "";
   orderDateInput.value = order.date;
   orderInvoiceNumberInput.value = order.invoiceNumber;
@@ -731,7 +989,7 @@ function startEditingOrder(orderId) {
   orderBillingAddressInput.value = order.billing.address;
   orderBillingGstInput.value = order.billing.gst;
   orderBillingPhoneInput.value = order.billing.phone;
-  orderBillingPaymentCycleInput.value = order.billing.paymentCycle;
+  orderBillingPaymentCycleInput.value = normalizeBilling(order.billing).paymentCycle;
   orderDiscountPercentInput.value = order.discountPercent;
   orderItemsElement.innerHTML = "";
   order.items.forEach((item) => addOrderItemRow(item));
@@ -739,6 +997,9 @@ function startEditingOrder(orderId) {
 
 function deleteOrder(orderId) {
   state.orders = state.orders.filter((order) => order.id !== orderId);
+  if (expandedOrderId === orderId) {
+    expandedOrderId = null;
+  }
   if (currentInvoiceOrderId === orderId) {
     currentInvoiceOrderId = null;
   }
@@ -750,6 +1011,7 @@ function resetOrderForm() {
   editingOrderId = null;
   orderForm.reset();
   orderCustomerSelect.value = "";
+  handleOrderCustomerSelection();
   orderItemsElement.innerHTML = "";
   addOrderItemRow();
   ensureOrderDefaults();
@@ -757,8 +1019,10 @@ function resetOrderForm() {
 
 function ensureOrderDefaults() {
   if (!orderDateInput.value) orderDateInput.value = toInputDate(today);
-  if (!orderDueDateInput.value) orderDueDateInput.value = toInputDate(addDays(today, 30));
-  if (!orderInvoiceNumberInput.value) orderInvoiceNumberInput.value = getNextInvoiceNumber();
+  if (!editingOrderId) {
+    orderInvoiceNumberInput.value = getNextInvoiceNumber();
+    updateOrderDueDateFromSelection();
+  }
   if (!orderDiscountPercentInput.value) orderDiscountPercentInput.value = "0";
 }
 
@@ -767,7 +1031,7 @@ function generateInvoiceFromOrder(orderId) {
   if (!order) return;
   currentInvoiceOrderId = orderId;
   invoicePreviewElement.className = "invoice-preview";
-  invoicePreviewElement.innerHTML = `<div class="invoice-sheet"><div class="invoice-top"><div class="invoice-brand"><img src="${companyDetails.logoPath}" alt="Leaf Over Logic logo" class="invoice-logo"><h3>${escapeHtml(companyDetails.name)}</h3>${companyDetails.address.map((line) => `<div>${escapeHtml(line)}</div>`).join("")}<div>Phone: ${escapeHtml(companyDetails.phone)}</div><div>Website: ${escapeHtml(companyDetails.website)}</div></div><div class="invoice-meta"><h3>INVOICE</h3><table><tr><td>DATE</td><td>${formatInvoiceDate(order.date)}</td></tr><tr><td>INVOICE #</td><td>${escapeHtml(order.invoiceNumber)}</td></tr><tr><td>CUSTOMER ID</td><td>${escapeHtml(order.customerCode)}</td></tr><tr><td>DUE DATE</td><td>${formatInvoiceDate(order.dueDate)}</td></tr></table></div></div><div class="invoice-grid"><div class="invoice-block"><h4>BILL TO</h4><div class="invoice-block__body"><div>${escapeHtml(order.billing.organization || order.customerName)}</div>${order.billing.address.split("\n").filter(Boolean).map((line) => `<div>${escapeHtml(line)}</div>`).join("")}<div>GSTIN/UIN: ${escapeHtml(order.billing.gst || "-")}</div><div>Ph: ${escapeHtml(order.billing.phone || "-")}</div></div></div><div class="invoice-block"><h4>Account Details</h4><div class="invoice-block__body"><div>Beneficiary Name: ${escapeHtml(companyDetails.account.beneficiary)}</div><div>Account Number: ${escapeHtml(companyDetails.account.number)}</div><div>IFSC Code: ${escapeHtml(companyDetails.account.ifsc)}</div><div>Branch: ${escapeHtml(companyDetails.account.branch)}</div><div>Bank: ${escapeHtml(companyDetails.account.bank)}</div></div></div></div><table class="invoice-table"><thead><tr><th>No.</th><th>Product</th><th>Description</th><th>HSN</th><th>QTY</th><th>Price</th><th>AMOUNT</th></tr></thead><tbody>${order.items.map((item, index) => `<tr><td>${index + 1}</td><td>Rozana Greens Microgreens</td><td>${escapeHtml(item.description)}</td><td>${escapeHtml(item.hsn)}</td><td>${item.quantity}</td><td>${formatCurrency(item.price)}</td><td>${formatCurrency(item.amount)}</td></tr>`).join("")}</tbody></table><div class="invoice-grid"><div class="invoice-terms"><h4>Terms & Conditions</h4><div class="invoice-terms__body"><div>1. Total payment due in ${escapeHtml(order.billing.paymentCycle || "30 days")}</div><div>2. Please include the invoice number on your check</div></div></div><div class="invoice-total"><div class="invoice-total__row"><span>Subtotal</span><strong>${formatCurrency(order.subtotal)}</strong></div><div class="invoice-total__row"><span>Discount</span><strong>${formatCurrency(order.discountAmount)}</strong></div><div class="invoice-total__row"><span>GST amount</span><strong>-</strong></div><div class="invoice-total__row"><span>Other</span><strong>-</strong></div><div class="invoice-total__row invoice-total__row--strong"><span>TOTAL</span><strong>${formatCurrency(order.total)}</strong></div><div style="margin-top:12px;">Make all checks payable to ${escapeHtml(companyDetails.account.beneficiary)}</div></div></div><div class="invoice-footnote">If you have any questions about this invoice, please contact<br>${escapeHtml(companyDetails.contactFooter)}<br><strong>Thank You For Your Business!</strong></div></div>`;
+  invoicePreviewElement.innerHTML = `<div class="invoice-sheet"><div class="invoice-top"><div class="invoice-brand"><img src="${companyDetails.logoPath}" alt="Leaf Over Logic logo" class="invoice-logo"><h3>${escapeHtml(companyDetails.name)}</h3>${companyDetails.address.map((line) => `<div>${escapeHtml(line)}</div>`).join("")}<div>Phone: ${escapeHtml(companyDetails.phone)}</div><div>Website: ${escapeHtml(companyDetails.website)}</div></div><div class="invoice-meta"><h3>INVOICE</h3><table><tr><td>DATE</td><td>${formatInvoiceDate(order.date)}</td></tr><tr><td>INVOICE #</td><td>${escapeHtml(order.invoiceNumber)}</td></tr><tr><td>CUSTOMER ID</td><td>${escapeHtml(order.customerCode)}</td></tr><tr><td>DUE DATE</td><td>${formatInvoiceDate(order.dueDate)}</td></tr></table></div></div><div class="invoice-grid"><div class="invoice-block"><h4>BILL TO</h4><div class="invoice-block__body"><div>${escapeHtml(order.billing.organization || order.customerName)}</div>${order.billing.address.split("\n").filter(Boolean).map((line) => `<div>${escapeHtml(line)}</div>`).join("")}<div>GSTIN/UIN: ${escapeHtml(order.billing.gst || "-")}</div><div>Ph: ${escapeHtml(order.billing.phone || "-")}</div></div></div><div class="invoice-block"><h4>Account Details</h4><div class="invoice-block__body"><div>Beneficiary Name: ${escapeHtml(companyDetails.account.beneficiary)}</div><div>Account Number: ${escapeHtml(companyDetails.account.number)}</div><div>IFSC Code: ${escapeHtml(companyDetails.account.ifsc)}</div><div>Branch: ${escapeHtml(companyDetails.account.branch)}</div><div>Bank: ${escapeHtml(companyDetails.account.bank)}</div></div></div></div><table class="invoice-table"><thead><tr><th>No.</th><th>Product</th><th>Description</th><th>HSN</th><th>QTY</th><th>MRP</th><th>AMOUNT</th></tr></thead><tbody>${order.items.map((item, index) => `<tr><td>${index + 1}</td><td>Rozana Greens Microgreens</td><td>${escapeHtml(item.description)}</td><td>${escapeHtml(item.hsn)}</td><td>${item.quantity}</td><td>${formatCurrency(item.price)}</td><td>${formatCurrency(item.amount)}</td></tr>`).join("")}</tbody></table><div class="invoice-grid"><div class="invoice-terms"><h4>Terms & Conditions</h4><div class="invoice-terms__body"><div>1. ${escapeHtml(getInvoicePaymentTermsText(order.billing))}</div><div>2. Please include the invoice number on your check</div></div></div><div class="invoice-total"><div class="invoice-total__row"><span>Subtotal</span><strong>${formatCurrency(order.subtotal)}</strong></div><div class="invoice-total__row"><span>Discount</span><strong>${formatCurrency(order.discountAmount)}</strong></div><div class="invoice-total__row"><span>GST amount</span><strong>-</strong></div><div class="invoice-total__row"><span>Other</span><strong>-</strong></div><div class="invoice-total__row invoice-total__row--strong"><span>TOTAL</span><strong>${formatCurrency(order.total)}</strong></div><div style="margin-top:12px;">Make all checks payable to ${escapeHtml(companyDetails.account.beneficiary)}</div></div></div><div class="invoice-footnote">If you have any questions about this invoice, please contact<br>${escapeHtml(companyDetails.contactFooter)}<br><strong>Thank You For Your Business!</strong></div></div>`;
 }
 
 function handleDownloadInvoice() {
@@ -776,13 +1040,31 @@ function handleDownloadInvoice() {
     return;
   }
   const printWindow = window.open("", "_blank", "width=1200,height=900");
-  printWindow.document.write(`<html><head><title>Invoice</title><link rel="stylesheet" href="styles.css"></head><body>${invoicePreviewElement.innerHTML}</body></html>`);
+  const stylesheetUrl = new URL("styles.css", window.location.href).href;
+  const printMarkup = `
+    <html>
+      <head>
+        <title>Invoice</title>
+        <base href="${window.location.href}">
+        <link rel="stylesheet" href="${stylesheetUrl}">
+      </head>
+      <body class="print-window">
+        ${invoicePreviewElement.innerHTML}
+      </body>
+    </html>
+  `;
+  printWindow.document.write(printMarkup);
   printWindow.document.close();
-  printWindow.focus();
-  printWindow.print();
+  printWindow.addEventListener("load", () => {
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+    }, 250);
+  }, { once: true });
 }
 
 function upsertCustomer(payload) {
+  payload.billing = normalizeBilling(payload.billing);
   const index = state.customers.findIndex((customer) => customer.id === payload.id);
   if (index >= 0) state.customers[index] = payload;
   else state.customers.push(payload);
@@ -886,9 +1168,19 @@ function applySerializedState(rawState) {
   state.blackTrayMultiplier = toPositiveNumber(rawState.blackTrayMultiplier, DEFAULT_BLACK_TRAY_MULTIPLIER);
   state.crops = Array.isArray(rawState.crops) ? rawState.crops : [];
   state.seeding = createSeedState(state.crops, rawState.seeding);
-  state.customers = Array.isArray(rawState.customers) ? rawState.customers : [];
+  state.customers = Array.isArray(rawState.customers)
+    ? rawState.customers.map((customer) => ({
+      ...customer,
+      billing: normalizeBilling(customer.billing),
+    }))
+    : [];
   state.skus = Array.isArray(rawState.skus) ? rawState.skus : [];
-  state.orders = Array.isArray(rawState.orders) ? rawState.orders : [];
+  state.orders = Array.isArray(rawState.orders)
+    ? rawState.orders.map((order) => ({
+      ...order,
+      billing: normalizeBilling(order.billing),
+    }))
+    : [];
 }
 
 function createSeedState(crops, savedSeeding) {
@@ -969,29 +1261,84 @@ function renderManhattanChart(element, entries, emptyMessage) {
 }
 
 function buildTwoWeekDemandForecast(orders) {
-  const last14Start = addDays(today, -13);
-  const recentOrders = orders.filter((order) => parseOrderDate(order.date) >= last14Start);
+  const recentStart = addDays(today, -13);
+  const priorStart = addDays(today, -27);
+  const byWeekday = new Map();
   const byDay = new Map();
   const bySku = new Map();
 
-  recentOrders.forEach((order) => {
-    const futureDate = addDays(parseOrderDate(order.date), 14);
-    const futureKey = toDateKey(futureDate);
-    const dayEntry = byDay.get(futureKey) || { date: futureKey, totalBoxes: 0, skuMap: new Map() };
+  orders.forEach((order) => {
+    const orderDate = parseOrderDate(order.date);
+    const orderKey = toDateKey(orderDate);
+    const isRecentWindow = orderDate >= recentStart && orderDate <= today;
+    const isPriorWindow = orderDate >= priorStart && orderDate < recentStart;
+    if (!isRecentWindow && !isPriorWindow) return;
 
+    const weekday = orderDate.getDay();
+    const weekdayEntry = byWeekday.get(weekday) || {
+      recentDates: new Set(),
+      priorDates: new Set(),
+      recentSkuMap: new Map(),
+      priorSkuMap: new Map(),
+    };
+    if (isRecentWindow) {
+      weekdayEntry.recentDates.add(orderKey);
+    } else {
+      weekdayEntry.priorDates.add(orderKey);
+    }
     (order.items || []).forEach((item) => {
       const quantity = toPositiveInteger(item.quantity, 0);
       const skuName = item.description || "Unknown SKU";
-      dayEntry.totalBoxes += quantity;
-      dayEntry.skuMap.set(skuName, (dayEntry.skuMap.get(skuName) || 0) + quantity);
-      bySku.set(skuName, (bySku.get(skuName) || 0) + quantity);
+      if (isRecentWindow) {
+        weekdayEntry.recentSkuMap.set(skuName, (weekdayEntry.recentSkuMap.get(skuName) || 0) + quantity);
+      } else {
+        weekdayEntry.priorSkuMap.set(skuName, (weekdayEntry.priorSkuMap.get(skuName) || 0) + quantity);
+      }
     });
-
-    byDay.set(futureKey, dayEntry);
+    byWeekday.set(weekday, weekdayEntry);
   });
 
+  for (let offset = 1; offset <= 14; offset += 1) {
+    const futureDate = addDays(today, offset);
+    const futureKey = toDateKey(futureDate);
+    const weekdayEntry = byWeekday.get(futureDate.getDay());
+    if (!weekdayEntry) continue;
+
+    const recentOccurrences = Math.max(weekdayEntry.recentDates.size, 1);
+    const priorOccurrences = Math.max(weekdayEntry.priorDates.size, 1);
+    const skuNames = new Set([
+      ...weekdayEntry.recentSkuMap.keys(),
+      ...weekdayEntry.priorSkuMap.keys(),
+    ]);
+    const dayEntry = { date: futureKey, totalBoxes: 0, skuMap: new Map() };
+
+    skuNames.forEach((skuName) => {
+      const recentAverage = (weekdayEntry.recentSkuMap.get(skuName) || 0) / recentOccurrences;
+      const priorAverage = (weekdayEntry.priorSkuMap.get(skuName) || 0) / priorOccurrences;
+      let projectedQuantity = 0;
+
+      if (recentAverage > 0) {
+        projectedQuantity = recentAverage + ((recentAverage - priorAverage) * 0.5);
+      } else if (priorAverage > 0) {
+        projectedQuantity = priorAverage * 0.5;
+      }
+
+      projectedQuantity = roundForecastQuantity(Math.max(projectedQuantity, 0));
+      if (!projectedQuantity) return;
+
+      dayEntry.totalBoxes += projectedQuantity;
+      dayEntry.skuMap.set(skuName, projectedQuantity);
+      bySku.set(skuName, roundForecastQuantity((bySku.get(skuName) || 0) + projectedQuantity));
+    });
+
+    if (dayEntry.totalBoxes > 0) {
+      dayEntry.totalBoxes = roundForecastQuantity(dayEntry.totalBoxes);
+      byDay.set(futureKey, dayEntry);
+    }
+  }
+
   return {
-    totalBoxes: Array.from(byDay.values()).reduce((sum, row) => sum + row.totalBoxes, 0),
+    totalBoxes: roundForecastQuantity(Array.from(byDay.values()).reduce((sum, row) => sum + row.totalBoxes, 0)),
     byDay: Array.from(byDay.values())
       .sort((left, right) => left.date.localeCompare(right.date))
       .map((row) => ({
@@ -999,13 +1346,203 @@ function buildTwoWeekDemandForecast(orders) {
         totalBoxes: row.totalBoxes,
         skuBreakdown: Array.from(row.skuMap.entries())
           .sort((left, right) => right[1] - left[1])
-          .map(([skuName, quantity]) => `${skuName} (${quantity})`)
+          .map(([skuName, quantity]) => `${skuName} (${formatNumber(quantity)})`)
           .join(", "),
       })),
     bySku: Array.from(bySku.entries())
       .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
-      .map(([skuName, quantity]) => ({ skuName, quantity })),
+      .map(([skuName, quantity]) => ({ skuName, quantity: roundForecastQuantity(quantity) })),
   };
+}
+
+function buildAnticipatedHarvestDemand(orders, harvestDates) {
+  const recentStart = addDays(today, -13);
+  const priorStart = addDays(today, -27);
+  const byWeekday = new Map();
+  const cropByDate = new Map();
+  const totalByDate = new Map();
+
+  orders.forEach((order) => {
+    const orderDate = parseOrderDate(order.date);
+    const orderKey = toDateKey(orderDate);
+    const isRecentWindow = orderDate >= recentStart && orderDate <= today;
+    const isPriorWindow = orderDate >= priorStart && orderDate < recentStart;
+    if (!isRecentWindow && !isPriorWindow) return;
+
+    const weekday = orderDate.getDay();
+    const weekdayEntry = byWeekday.get(weekday) || {
+      recentDates: new Set(),
+      priorDates: new Set(),
+      recentCropMap: new Map(),
+      priorCropMap: new Map(),
+    };
+    if (isRecentWindow) {
+      weekdayEntry.recentDates.add(orderKey);
+    } else {
+      weekdayEntry.priorDates.add(orderKey);
+    }
+
+    (order.items || []).forEach((item) => {
+      const crop = findCropForOrderItem(item);
+      if (!crop) return;
+
+      const equivalentBoxes = convertOrderItemToSixtyFiveGramBoxes(item);
+      if (!equivalentBoxes) return;
+
+      const targetMap = isRecentWindow ? weekdayEntry.recentCropMap : weekdayEntry.priorCropMap;
+      targetMap.set(crop.id, (targetMap.get(crop.id) || 0) + equivalentBoxes);
+    });
+
+    byWeekday.set(weekday, weekdayEntry);
+  });
+
+  harvestDates.forEach((harvestDate) => {
+    const weekdayEntry = byWeekday.get(harvestDate.getDay());
+    if (!weekdayEntry) return;
+
+    const dateKey = toDateKey(harvestDate);
+    const recentOccurrences = Math.max(weekdayEntry.recentDates.size, 1);
+    const priorOccurrences = Math.max(weekdayEntry.priorDates.size, 1);
+    let totalProjected = 0;
+
+    state.crops.forEach((crop) => {
+      const recentAverage = (weekdayEntry.recentCropMap.get(crop.id) || 0) / recentOccurrences;
+      const priorAverage = (weekdayEntry.priorCropMap.get(crop.id) || 0) / priorOccurrences;
+      let projectedBoxes = 0;
+
+      if (recentAverage > 0) {
+        projectedBoxes = recentAverage + ((recentAverage - priorAverage) * 0.5);
+      } else if (priorAverage > 0) {
+        projectedBoxes = priorAverage * 0.5;
+      }
+
+      projectedBoxes = Math.ceil(Math.max(projectedBoxes, 0));
+      if (!projectedBoxes) return;
+
+      totalProjected += projectedBoxes;
+      cropByDate.set(`${crop.id}|${dateKey}`, projectedBoxes);
+    });
+
+    if (totalProjected > 0) {
+      totalByDate.set(`total|${dateKey}`, totalProjected);
+    }
+  });
+
+  return { cropByDate, totalByDate };
+}
+
+function convertOrderItemToSixtyFiveGramBoxes(item) {
+  const sourceName = item.description || findSkuById(item.skuId)?.name || "";
+  const gramsMatch = sourceName.match(/(\d+(?:\.\d+)?)\s*g(?:m|ms)\b/i);
+  const packSizeGrams = gramsMatch ? toPositiveNumber(gramsMatch[1], 65) : 65;
+  const quantity = toPositiveNumber(item.quantity, 0);
+  return quantity > 0 ? (quantity * packSizeGrams) / 65 : 0;
+}
+
+function findCropForOrderItem(item) {
+  const sourceName = item.description || findSkuById(item.skuId)?.name || "";
+  const normalizedSource = normalizeCropLookup(sourceName);
+  return [...state.crops]
+    .sort((left, right) => right.name.length - left.name.length)
+    .find((crop) => normalizedSource.includes(normalizeCropLookup(crop.name))) || null;
+}
+
+function normalizeCropLookup(value) {
+  return normalizeSkuName(value)
+    .replace(/\bmicrogreens\b/g, " ")
+    .replace(/\bhand-trimmed\b/g, " ")
+    .replace(/\b\d+(?:\.\d+)?\s*g(?:m|ms)\b/g, " ")
+    .replace(/\bbox\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getAnticipatedBoxesForCell(targetMap, keyPrefix, date) {
+  return targetMap.get(`${keyPrefix}|${toDateKey(date)}`) || 0;
+}
+
+function buildAnticipatedTrayPlan(crop, harvestDate, actualBoxes, anticipatedBoxes) {
+  if (!crop || anticipatedBoxes <= 0 || actualBoxes >= anticipatedBoxes) return null;
+  const seedingDate = addDays(harvestDate, -crop.harvestDays);
+  const dateKey = toDateKey(seedingDate);
+  const shortfallBoxes = Math.max(anticipatedBoxes - actualBoxes, 0);
+  const greenTrays = Math.ceil(shortfallBoxes / Math.max(crop.greenTrayYieldBoxes, 0.01));
+  const blackTrays = Math.ceil(shortfallBoxes / Math.max(getTrayYieldBoxes(crop, "black"), 0.01));
+  const existingGreen = state.seeding[crop.id]?.green?.[dateKey] || 0;
+  const existingBlack = state.seeding[crop.id]?.black?.[dateKey] || 0;
+
+  let recommendedTrayId = "black";
+  if (existingGreen > 0 && existingBlack === 0) {
+    recommendedTrayId = "green";
+  } else if (existingBlack > 0 && existingGreen === 0) {
+    recommendedTrayId = "black";
+  } else if (greenTrays <= blackTrays) {
+    recommendedTrayId = "green";
+  }
+
+  const recommendedTrayCount = recommendedTrayId === "green" ? greenTrays : blackTrays;
+  const recommendedTrayLabel = recommendedTrayId === "green" ? "green trays" : "black trays";
+
+  return {
+    cropId: crop.id,
+    harvestDateKey: toDateKey(harvestDate),
+    seedingDateKey: dateKey,
+    shortfallBoxes,
+    lines: [
+      `Seed on ${formatDayMonth(seedingDate)} (${formatWeekday(seedingDate)})`,
+      `Short by ${formatNumber(shortfallBoxes)} forecast 65g boxes`,
+      `${greenTrays} green trays or ${blackTrays} black trays`,
+      `Recommended: ${recommendedTrayCount} ${recommendedTrayLabel}`,
+    ],
+    recommendedTrayId,
+    recommendedTrayCount,
+  };
+}
+
+function shouldUnderlineAnticipatedDemand(crop, harvestDate, actualBoxes, anticipatedBoxes) {
+  if (!crop || anticipatedBoxes <= 0 || actualBoxes >= anticipatedBoxes) return false;
+  const seedingDate = addDays(harvestDate, -crop.harvestDays);
+  return seedingDate <= addDays(today, 1);
+}
+
+function renderProjectedBoxesCell(actualBoxes, anticipatedBoxes, tooltipKey, trayPlan = null, underlineAnticipated = false) {
+  const anticipatedClass = [
+    "box-cell__anticipated",
+    actualBoxes < anticipatedBoxes ? "box-cell__anticipated--short" : "box-cell__anticipated--covered",
+    underlineAnticipated ? "box-cell__anticipated--action" : "",
+  ].filter(Boolean).join(" ");
+  if (!trayPlan) {
+    return `<td><div class="box-cell"><strong class="box-cell__actual">${formatNumber(actualBoxes)}${anticipatedBoxes > 0 ? ` <small class="${anticipatedClass}">(${formatNumber(anticipatedBoxes)})</small>` : ""}</strong></div></td>`;
+  }
+  const tooltipMarkup = trayPlan.lines.map((line) => `<span>${escapeHtml(line)}</span>`).join("");
+  const isOpen = activeProjectedBoxTooltipKey === tooltipKey;
+  return `<td><div class="box-cell box-cell--interactive ${isOpen ? "is-open" : ""}" data-box-tooltip-key="${tooltipKey}"><button class="box-cell__trigger" type="button" data-box-tooltip-key="${tooltipKey}" aria-expanded="${isOpen ? "true" : "false"}"><strong class="box-cell__actual">${formatNumber(actualBoxes)}${anticipatedBoxes > 0 ? ` <small class="${anticipatedClass}">(${formatNumber(anticipatedBoxes)})</small>` : ""}</strong></button><div class="box-cell__tooltip">${tooltipMarkup}<button class="box-cell__action" type="button" data-box-tooltip-key="${tooltipKey}" data-crop-id="${trayPlan.cropId}" data-seeding-date="${trayPlan.seedingDateKey}" data-tray-id="${trayPlan.recommendedTrayId}" data-tray-count="${trayPlan.recommendedTrayCount}">Do it!</button></div></div></td>`;
+}
+
+function handleProjectedBoxTooltipToggle(event) {
+  event.stopPropagation();
+  const button = event.currentTarget;
+  const tooltipKey = button.dataset.boxTooltipKey || "";
+  activeProjectedBoxTooltipKey = activeProjectedBoxTooltipKey === tooltipKey ? "" : tooltipKey;
+  renderBoxesTable();
+}
+
+function handleProjectedBoxAction(event) {
+  event.stopPropagation();
+  const { cropId, seedingDate, trayId } = event.currentTarget.dataset;
+  const trayCount = toPositiveInteger(event.currentTarget.dataset.trayCount, 0);
+  if (!cropId || !seedingDate || !trayId || trayCount <= 0) return;
+
+  const currentValue = state.seeding[cropId]?.[trayId]?.[seedingDate] || 0;
+  state.seeding[cropId][trayId][seedingDate] = currentValue + trayCount;
+  activeProjectedBoxTooltipKey = "";
+  renderYield();
+  markDirty();
+  setSyncStatus(`Added ${trayCount} ${trayId === "green" ? "green" : "black"} trays on ${formatDayMonth(parseOrderDate(seedingDate))}`);
+}
+
+function roundForecastQuantity(value) {
+  return Math.round(value * 2) / 2;
 }
 
 function renderForecastDays(rows) {
@@ -1014,10 +1551,10 @@ function renderForecastDays(rows) {
     ? rows.map((row) => `
       <div class="forecast-row">
         <strong>${escapeHtml(formatInvoiceDate(row.date))}</strong>
-        <span>${escapeHtml(`${row.totalBoxes} boxes`)}<br>${escapeHtml(row.skuBreakdown || "-")}</span>
+        <span>${escapeHtml(`${formatNumber(row.totalBoxes)} boxes`)}<br>${escapeHtml(row.skuBreakdown || "-")}</span>
       </div>
     `).join("")
-    : `<div class="forecast-list__empty">No recent orders available to project the next two weeks.</div>`;
+    : `<div class="forecast-list__empty">No weekday demand pattern is available yet for the next two weeks.</div>`;
 }
 
 function renderForecastSkus(rows) {
@@ -1026,7 +1563,7 @@ function renderForecastSkus(rows) {
     ? rows.map((row) => `
       <div class="forecast-row">
         <strong>${escapeHtml(row.skuName)}</strong>
-        <span>${escapeHtml(`${row.quantity} boxes expected`)}</span>
+        <span>${escapeHtml(`${formatNumber(row.quantity)} boxes expected`)}</span>
       </div>
     `).join("")
     : `<div class="forecast-list__empty">No SKU-level demand forecast available yet.</div>`;
@@ -1059,7 +1596,7 @@ async function loadMigrationPayload() {
 function cloneCustomers(customers) {
   return customers.map((customer) => ({
     ...customer,
-    billing: { ...customer.billing },
+    billing: normalizeBilling(customer.billing),
     chefs: Array.isArray(customer.chefs) ? customer.chefs.map((chef) => ({ ...chef })) : [],
   }));
 }
@@ -1070,7 +1607,7 @@ function mergeCustomersByCode(existingCustomers, incomingCustomers) {
     const key = customer.customerCode || customer.id;
     if (key) merged.set(key, {
       ...customer,
-      billing: { ...customer.billing },
+      billing: normalizeBilling(customer.billing),
       chefs: Array.isArray(customer.chefs) ? customer.chefs.map((chef) => ({ ...chef })) : [],
     });
   });
@@ -1078,7 +1615,7 @@ function mergeCustomersByCode(existingCustomers, incomingCustomers) {
     const key = customer.customerCode || customer.id;
     if (key) merged.set(key, {
       ...customer,
-      billing: { ...customer.billing },
+      billing: normalizeBilling(customer.billing),
       chefs: Array.isArray(customer.chefs) ? customer.chefs.map((chef) => ({ ...chef })) : [],
     });
   });
@@ -1104,7 +1641,7 @@ function mergeOrdersByInvoice(existingOrders, incomingOrders) {
 
 function hydrateMigratedOrder(order, customerByCode) {
   const customer = customerByCode.get(order.customerCode) || null;
-  const billing = customer?.billing ? { ...customer.billing } : { ...(order.billing || {}) };
+  const billing = normalizeBilling(customer?.billing ? { ...customer.billing } : { ...(order.billing || {}) });
   const items = Array.isArray(order.items) ? order.items.map((item) => hydrateMigratedItem(item)) : [];
   const subtotal = toPositiveNumber(order.subtotal, items.reduce((sum, item) => sum + item.amount, 0));
   const discountAmount = toPositiveNumber(order.discountAmount, 0);
@@ -1144,6 +1681,10 @@ function hydrateMigratedItem(item) {
 function findSkuByName(name) {
   const target = normalizeSkuName(name);
   return state.skus.find((sku) => normalizeSkuName(sku.name) === target) || null;
+}
+
+function findSkuById(skuId) {
+  return state.skus.find((sku) => sku.id === skuId) || null;
 }
 
 function normalizeSkuName(name) {
