@@ -10,20 +10,63 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="shell">
+  <section id="login-view" class="login-screen">
+    <div class="login-screen__backdrop"></div>
+    <div class="login-card">
+      <div class="login-card__brand">
+        <img src="rg_logo_withShadow.png" alt="Rozana Greens logo" class="brand-logo brand-logo--login">
+        <div>
+          <p class="eyebrow">Rozana Greens</p>
+          <h1>Administrative Portal</h1>
+          <p class="login-card__text">Sign in with the username and password configured in User Management.</p>
+        </div>
+      </div>
+      <form id="login-form" class="form-stack">
+        <div class="form-grid">
+          <label class="form-field">
+            <span>Username</span>
+            <input id="login-username" type="text" required>
+          </label>
+          <label class="form-field">
+            <span>Password</span>
+            <input id="login-password" type="password" required>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="secondary-button primary-button" type="submit">Log In</button>
+        </div>
+        <div id="login-status" class="login-status login-status--neutral">Enter your credentials to continue.</div>
+      </form>
+    </div>
+  </section>
+
+  <div id="app-shell" class="shell hidden">
+    <div class="brand-bar">
+      <div class="brand-bar__identity">
+        <img src="rg_logo_withShadow.png" alt="Rozana Greens logo" class="brand-logo">
+        <div>
+          <p class="eyebrow">Rozana Greens</p>
+          <strong>Admin Workspace</strong>
+        </div>
+      </div>
+      <div class="brand-bar__actions">
+        <span id="current-user-chip" class="status-pill">Not signed in</span>
+        <button id="logout-button" class="secondary-button" type="button">Log Out</button>
+      </div>
+    </div>
     <header class="hero">
       <div class="hero__copy">
         <p class="eyebrow">Internal Operations</p>
         <h1>Administrative Portal</h1>
         <p id="app-version" class="version-pill">Version -</p>
         <p class="hero__text">
-          Manage yield planning, customers, SKUs, and invoice-ready orders from one internal workspace.
+          Manage operations, users, customers, SKUs, and invoice-ready orders from one internal workspace.
         </p>
       </div>
       <div class="hero__meta">
         <div class="meta-card">
           <span class="meta-card__label">Workspace</span>
-          <strong>Leaf Over Logic Admin</strong>
+          <strong>Rozana Greens Admin</strong>
         </div>
         <div class="meta-card">
           <span class="meta-card__label">Storage</span>
@@ -38,15 +81,11 @@
           <div>
             <p class="section-tag">Apps</p>
             <h2>Choose a workspace</h2>
-            <p class="section-subtitle">Each app uses the same Firebase save flow.</p>
-          </div>
-          <div class="toolbar hidden">
-            <button id="save-data-home" class="secondary-button primary-button" type="button">Save Data to Firebase</button>
-            <button id="run-migration" class="secondary-button" type="button">Run One-Time Migration</button>
+            <p class="section-subtitle">All supported changes sync automatically to Firebase.</p>
           </div>
         </div>
 
-        <div class="app-grid app-grid--five">
+        <div class="app-grid app-grid--seven">
           <button class="app-tile" type="button" data-open-app="yield">
             <span class="app-tile__badge">Live</span>
             <strong>Yield Availability</strong>
@@ -62,6 +101,11 @@
             <strong>SKU</strong>
             <span>Manage product catalog, price, and HSN.</span>
           </button>
+          <button class="app-tile" type="button" data-open-app="users">
+            <span class="app-tile__badge">People</span>
+            <strong>User Management</strong>
+            <span>Create titles and assign reporting relationships.</span>
+          </button>
           <button class="app-tile" type="button" data-open-app="ordering">
             <span class="app-tile__badge">Billing</span>
             <strong>Ordering App</strong>
@@ -72,6 +116,11 @@
             <strong>Analytics</strong>
             <span>Sales trends and two-week demand forecasting.</span>
           </button>
+          <button class="app-tile" type="button" data-open-app="sales">
+            <span class="app-tile__badge">Finance</span>
+            <strong>Sales</strong>
+            <span>MTD, YTD, due amounts, and receipts.</span>
+          </button>
         </div>
       </section>
 
@@ -80,11 +129,10 @@
           <div>
             <p id="active-app-tag" class="section-tag">App</p>
             <h2 id="active-app-title">Workspace</h2>
-            <p id="active-app-subtitle" class="section-subtitle">Manage data and save it to Firebase.</p>
+            <p id="active-app-subtitle" class="section-subtitle">Manage data with automatic Firebase sync.</p>
           </div>
           <div class="toolbar">
             <span id="sync-status" class="status-pill">Firebase not configured</span>
-            <button id="save-data" class="secondary-button primary-button" type="button">Save</button>
             <button id="back-to-home" class="secondary-button" type="button">Back</button>
           </div>
         </div>
@@ -116,10 +164,13 @@
               </button>
               <div class="collapsible-content">
                 <div class="config-toolbar">
-                  <label class="inline-field">
-                    <span>Black tray multiplier</span>
-                    <input id="black-tray-multiplier" type="number" min="0" step="0.1" value="2.5">
-                  </label>
+                  <div class="config-toolbar__actions">
+                    <label class="inline-field">
+                      <span>Black tray multiplier</span>
+                      <input id="black-tray-multiplier" type="number" min="0" step="0.1" value="2.5">
+                    </label>
+                    <button id="add-crop" class="secondary-button" type="button">Add Microgreen</button>
+                  </div>
                   <span class="mobile-hint">On mobile, swipe horizontally to review all columns.</span>
                 </div>
                 <div class="table-shell">
@@ -198,6 +249,13 @@
                     <span>Customer Personal Contact Number</span>
                     <input id="customer-contact-number" type="text">
                   </label>
+                  <label class="form-field">
+                    <span>Invoicing</span>
+                    <select id="customer-invoicing-type">
+                      <option value="formal">Formal</option>
+                      <option value="informal">Informal</option>
+                    </select>
+                  </label>
                 </div>
 
                 <div class="subsection">
@@ -246,7 +304,8 @@
                 </div>
 
                 <div class="form-actions">
-                  <button class="secondary-button primary-button" type="submit">Save Customer Draft</button>
+                  <button class="secondary-button primary-button" type="submit">Save Customer</button>
+                  <span id="customer-save-feedback" class="save-feedback" aria-live="polite"></span>
                   <button id="reset-customer-form" class="secondary-button" type="button">New Customer</button>
                 </div>
               </form>
@@ -289,11 +348,116 @@
                   </label>
                 </div>
                 <div class="form-actions">
-                  <button class="secondary-button primary-button" type="submit">Save SKU Draft</button>
+                  <button class="secondary-button primary-button" type="submit">Save SKU</button>
+                  <span id="sku-save-feedback" class="save-feedback" aria-live="polite"></span>
                   <button id="reset-sku-form" class="secondary-button" type="button">New SKU</button>
                 </div>
               </form>
             </section>
+          </div>
+        </div>
+
+        <div id="users-app" class="app-panel hidden">
+          <div class="content-stack">
+            <div class="two-column-layout">
+              <section class="card">
+                <div class="card__header">
+                  <div>
+                    <h3>Titles</h3>
+                    <p>Create and maintain the available titles for users.</p>
+                  </div>
+                </div>
+                <div id="title-list" class="list-stack"></div>
+              </section>
+
+              <section class="card">
+                <div class="card__header">
+                  <div>
+                    <h3 id="title-form-title">New Title</h3>
+                    <p>Each title includes a name and description.</p>
+                  </div>
+                </div>
+                <form id="title-form" class="form-stack">
+                  <div class="form-grid">
+                    <label class="form-field">
+                      <span>Title</span>
+                      <input id="job-title-name" type="text" required>
+                    </label>
+                    <label class="form-field form-field--full">
+                      <span>Description</span>
+                      <textarea id="job-title-description" rows="4" required></textarea>
+                    </label>
+                  </div>
+                  <div class="form-actions">
+                    <button class="secondary-button primary-button" type="submit">Save Title</button>
+                    <span id="title-save-feedback" class="save-feedback" aria-live="polite"></span>
+                    <button id="reset-title-form" class="secondary-button" type="button">New Title</button>
+                  </div>
+                </form>
+              </section>
+            </div>
+
+            <div class="two-column-layout">
+              <section class="card">
+                <div class="card__header">
+                  <div>
+                    <h3>Users</h3>
+                    <p>Create users and assign titles and reporting managers.</p>
+                  </div>
+                </div>
+                <div id="users-list" class="list-stack"></div>
+              </section>
+
+              <section class="card">
+                <div class="card__header">
+                  <div>
+                    <h3 id="user-form-title">New User</h3>
+                    <p>Phone number is required. Reporting manager and email are optional.</p>
+                  </div>
+                </div>
+                <form id="user-form" class="form-stack">
+                  <div class="form-grid">
+                    <label class="form-field">
+                      <span>First Name</span>
+                      <input id="user-first-name" type="text" required>
+                    </label>
+                    <label class="form-field">
+                      <span>Last Name</span>
+                      <input id="user-last-name" type="text" required>
+                    </label>
+                    <label class="form-field">
+                      <span>Username</span>
+                      <input id="user-username" type="text" required>
+                    </label>
+                    <label class="form-field">
+                      <span>Password</span>
+                      <input id="user-password" type="password" required>
+                    </label>
+                    <label class="form-field">
+                      <span>Title</span>
+                      <select id="user-title" required></select>
+                    </label>
+                    <label class="form-field">
+                      <span>Reporting Manager</span>
+                      <select id="user-reporting-manager"></select>
+                    </label>
+                    <label class="form-field">
+                      <span>Phone Number</span>
+                      <input id="user-phone-number" type="text" required>
+                    </label>
+                    <label class="form-field">
+                      <span>Email Address</span>
+                      <input id="user-email-address" type="email">
+                    </label>
+                  </div>
+                  <div class="form-actions">
+                    <button class="secondary-button primary-button" type="submit">Save User</button>
+                    <span id="user-save-feedback" class="save-feedback" aria-live="polite"></span>
+                    <button id="reset-user-form" class="secondary-button" type="button">New User</button>
+                  </div>
+                </form>
+              </section>
+            </div>
           </div>
         </div>
 
@@ -373,7 +537,8 @@
                   </div>
 
                   <div class="form-actions">
-                    <button class="secondary-button primary-button" type="submit">Save Order Draft</button>
+                    <button class="secondary-button primary-button" type="submit">Save Order</button>
+                    <span id="order-save-feedback" class="save-feedback" aria-live="polite"></span>
                     <button id="reset-order-form" class="secondary-button" type="button">New Order</button>
                   </div>
                 </form>
@@ -383,23 +548,68 @@
                 <div class="card__header">
                   <div>
                     <h3>Saved Orders</h3>
-                    <p>Generate invoice previews from saved orders.</p>
+                    <p>Download invoices directly from saved orders.</p>
                   </div>
                 </div>
                 <div id="orders-list" class="list-stack"></div>
               </section>
             </div>
+          </div>
+        </div>
+
+        <div id="otp-app" class="app-panel hidden">
+          <div class="two-column-layout">
+            <section class="card">
+              <div class="card__header">
+                <div>
+                  <h3>Send OTP</h3>
+                  <p>Select a user or enter a phone number in E.164 format like +919876543210.</p>
+                </div>
+              </div>
+              <div class="form-stack">
+                <div class="form-grid">
+                  <label class="form-field">
+                    <span>User</span>
+                    <select id="otp-user-select"></select>
+                  </label>
+                  <label class="form-field">
+                    <span>Phone Number</span>
+                    <input id="otp-phone-number" type="text" placeholder="+919876543210">
+                  </label>
+                  <label class="form-field">
+                    <span>Mode</span>
+                    <select id="otp-mode-select">
+                      <option value="test">Firebase test number</option>
+                      <option value="live">Real SMS number</option>
+                    </select>
+                  </label>
+                </div>
+                <div id="otp-recaptcha-container" class="otp-recaptcha"></div>
+                <div class="form-actions">
+                  <button id="send-otp-button" class="secondary-button primary-button" type="button">Send OTP</button>
+                  <button id="reset-otp-button" class="secondary-button" type="button">Reset OTP Session</button>
+                </div>
+                <p class="otp-helper">Firebase will show a reCAPTCHA challenge before sending an SMS for real numbers.</p>
+              </div>
+            </section>
 
             <section class="card">
               <div class="card__header">
                 <div>
-                  <h3>Invoice Preview</h3>
-                  <p>Use the browser print dialog to download the invoice as PDF.</p>
+                  <h3>Verify OTP</h3>
+                  <p>Enter the 6-digit code received on the phone or the test code configured in Firebase.</p>
                 </div>
-                <button id="download-invoice" class="secondary-button" type="button">Download PDF</button>
               </div>
-              <div id="invoice-preview" class="invoice-preview empty-state">
-                Save an order, then choose Generate Invoice from the saved orders list.
+              <div class="form-stack">
+                <label class="form-field">
+                  <span>Verification Code</span>
+                  <input id="otp-code" type="text" inputmode="numeric" maxlength="6" placeholder="123456">
+                </label>
+                <div class="form-actions">
+                  <button id="verify-otp-button" class="secondary-button primary-button" type="button">Verify OTP</button>
+                </div>
+                <div id="otp-auth-user" class="otp-auth-user">No OTP-authenticated user yet.</div>
+                <div id="otp-status" class="otp-status otp-status--neutral">Firebase Auth SDK not initialized yet.</div>
               </div>
             </section>
           </div>
@@ -465,10 +675,73 @@
             </section>
           </div>
         </div>
+
+        <div id="sales-app" class="app-panel hidden">
+          <div class="summary-grid summary-grid--compact">
+            <article class="summary-card">
+              <span>MTD Sales</span>
+              <strong id="sales-mtd">₹ 0.00</strong>
+            </article>
+            <article class="summary-card">
+              <span>YTD Sales</span>
+              <strong id="sales-ytd">₹ 0.00</strong>
+            </article>
+          </div>
+
+          <section class="card">
+            <div class="card__header">
+              <div>
+                <h3>Customer Sales</h3>
+                <p>Sales, due amounts, and receipts are calculated from saved orders and payment entries. Download ledgers directly from the table.</p>
+              </div>
+            </div>
+            <div class="table-shell">
+              <table id="sales-table" class="data-table sales-table"></table>
+            </div>
+          </section>
+        </div>
       </section>
     </main>
   </div>
 
+  <div id="payment-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="card__header">
+        <div>
+          <h3>Amount Received</h3>
+          <p>Record a payment against a customer.</p>
+        </div>
+        <button id="close-payment-modal" class="secondary-button" type="button">Close</button>
+      </div>
+      <form id="payment-form" class="form-stack">
+        <div class="form-grid">
+          <label class="form-field">
+            <span>Customer Name</span>
+            <input id="payment-customer-name" type="text" readonly>
+          </label>
+          <label class="form-field">
+            <span>Date</span>
+            <input id="payment-date" type="date">
+          </label>
+          <label class="form-field">
+            <span>Amount Received</span>
+            <input id="payment-amount" type="number" min="0" step="0.01" placeholder="e.g. 2500">
+          </label>
+          <label class="form-field">
+            <span>Notes</span>
+            <input id="payment-notes" type="text" placeholder="Optional note">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="secondary-button primary-button" type="submit">Save Receipt</button>
+          <span id="payment-save-feedback" class="save-feedback" aria-live="polite"></span>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-auth-compat.js"></script>
   <script src="firebase-config.js"></script>
   <script src="migration-data.js"></script>
   <script src="app.js"></script>

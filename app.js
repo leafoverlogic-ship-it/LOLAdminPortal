@@ -1,7 +1,8 @@
 const DEFAULT_REFERENCE_HARVEST_DAYS = 11;
 const DEFAULT_BLACK_TRAY_MULTIPLIER = 2.5;
 const ORDERS_PAGE_SIZE = 10;
-const APP_VERSION = "v1.3.30";
+const AUTO_SAVE_DELAY_MS = 700;
+const APP_VERSION = "v1.6.2";
 const firebaseSettings = window.firebaseSettings || { enabled: false, config: {}, statePath: "adminPortal/yieldAvailability" };
 const migrationData = window.migrationData || { customers: [], orders: [], ordersPath: "" };
 const migrationSkuAliases = {
@@ -22,6 +23,7 @@ const companyDetails = {
     "Lucknow, Uttar Pradesh - 226022",
   ],
   phone: "9631442701",
+  gst: "09AAGCL4603B1ZW",
   website: "www.leafoverlogic.com",
   contactFooter: "Prateek Srivastava, 9631442701, contactus@leafoverlogic.com",
   logoPath: "logo.png",
@@ -42,16 +44,37 @@ let cloudSyncEnabled = false;
 let isDirty = false;
 let editingCustomerId = null;
 let editingSkuId = null;
+let editingTitleId = null;
+let editingUserId = null;
 let editingOrderId = null;
 let currentInvoiceOrderId = null;
 let currentOrdersPage = 1;
 let expandedOrderId = null;
 let activeProjectedBoxTooltipKey = "";
+let currentLedgerBillingOrganizationKey = "";
+let autoSaveTimerId = null;
+let saveInFlight = false;
+let pendingImmediateSave = false;
+let changeSequence = 0;
+const saveFeedbackTimers = new Map();
+let activeUserId = "";
+let otpFirebaseApp = null;
+let otpAuth = null;
+let otpRecaptchaVerifier = null;
+let otpRecaptchaWidgetId = null;
+let otpConfirmationResult = null;
+let otpAuthObserverAttached = false;
 
 const landingView = document.getElementById("landing-view");
 const appView = document.getElementById("app-view");
+const loginView = document.getElementById("login-view");
+const loginForm = document.getElementById("login-form");
+const loginStatusElement = document.getElementById("login-status");
+const appShell = document.getElementById("app-shell");
 const appVersionElement = document.getElementById("app-version");
 const syncStatusElement = document.getElementById("sync-status");
+const currentUserChip = document.getElementById("current-user-chip");
+const logoutButton = document.getElementById("logout-button");
 const saveDataButton = document.getElementById("save-data");
 const saveDataHomeButton = document.getElementById("save-data-home");
 const backToHomeButton = document.getElementById("back-to-home");
@@ -64,16 +87,22 @@ const appPanels = {
   yield: document.getElementById("yield-app"),
   customers: document.getElementById("customers-app"),
   skus: document.getElementById("skus-app"),
+  users: document.getElementById("users-app"),
+  otp: document.getElementById("otp-app"),
   ordering: document.getElementById("ordering-app"),
   analytics: document.getElementById("analytics-app"),
+  sales: document.getElementById("sales-app"),
 };
 
 const appMeta = {
   yield: { tag: "Yield Availability", title: "Seed planning and projected boxes", subtitle: "Tray planning and crop configuration." },
   customers: { tag: "Customers", title: "Customer management", subtitle: "Capture customer, billing, and chef information." },
   skus: { tag: "SKU", title: "SKU catalog", subtitle: "Maintain pricing and HSN data." },
+  users: { tag: "User Management", title: "Users, titles, and reporting lines", subtitle: "Maintain titles and assign them to users." },
+  otp: { tag: "Mobile OTP", title: "Phone OTP testing", subtitle: "Send and verify Firebase phone authentication codes." },
   ordering: { tag: "Ordering App", title: "Order entry and invoice generation", subtitle: "Save orders first, then generate invoices." },
   analytics: { tag: "Analytics", title: "Sales and demand analytics", subtitle: "Reports based on saved order history." },
+  sales: { tag: "Sales", title: "Sales and receipts", subtitle: "Track MTD, YTD, due amounts, and receipts." },
 };
 
 const collapsibleCards = {
@@ -85,6 +114,7 @@ const planningWindowLabelElement = document.getElementById("planning-window-labe
 const windowTotalElement = document.getElementById("window-total");
 const monthTotalElement = document.getElementById("month-total");
 const blackTrayMultiplierInput = document.getElementById("black-tray-multiplier");
+const addCropButton = document.getElementById("add-crop");
 const configTable = document.getElementById("config-table");
 const seedingTable = document.getElementById("seeding-table");
 const boxesTable = document.getElementById("boxes-table");
@@ -95,6 +125,7 @@ const chefListElement = document.getElementById("chef-list");
 const addChefButton = document.getElementById("add-chef");
 const resetCustomerFormButton = document.getElementById("reset-customer-form");
 const customerFormTitleElement = document.getElementById("customer-form-title");
+const customerInvoicingTypeInput = document.getElementById("customer-invoicing-type");
 const billingPaymentCycleTypeInput = document.getElementById("billing-payment-cycle-type");
 const billingPaymentCycleDaysField = document.getElementById("billing-payment-cycle-days-field");
 const billingPaymentCycleDaysInput = document.getElementById("billing-payment-cycle-days");
@@ -105,6 +136,32 @@ const skuListElement = document.getElementById("sku-list");
 const skuForm = document.getElementById("sku-form");
 const resetSkuFormButton = document.getElementById("reset-sku-form");
 const skuFormTitleElement = document.getElementById("sku-form-title");
+
+const titleListElement = document.getElementById("title-list");
+const titleForm = document.getElementById("title-form");
+const resetTitleFormButton = document.getElementById("reset-title-form");
+const titleFormTitleElement = document.getElementById("title-form-title");
+const userListElement = document.getElementById("users-list");
+const userForm = document.getElementById("user-form");
+const resetUserFormButton = document.getElementById("reset-user-form");
+const userFormTitleElement = document.getElementById("user-form-title");
+const userTitleSelect = document.getElementById("user-title");
+const userReportingManagerSelect = document.getElementById("user-reporting-manager");
+const customerSaveFeedbackElement = document.getElementById("customer-save-feedback");
+const skuSaveFeedbackElement = document.getElementById("sku-save-feedback");
+const titleSaveFeedbackElement = document.getElementById("title-save-feedback");
+const userSaveFeedbackElement = document.getElementById("user-save-feedback");
+const orderSaveFeedbackElement = document.getElementById("order-save-feedback");
+const otpUserSelect = document.getElementById("otp-user-select");
+const otpPhoneNumberInput = document.getElementById("otp-phone-number");
+const otpModeSelect = document.getElementById("otp-mode-select");
+const otpCodeInput = document.getElementById("otp-code");
+const sendOtpButton = document.getElementById("send-otp-button");
+const verifyOtpButton = document.getElementById("verify-otp-button");
+const resetOtpButton = document.getElementById("reset-otp-button");
+const otpRecaptchaContainer = document.getElementById("otp-recaptcha-container");
+const otpStatusElement = document.getElementById("otp-status");
+const otpAuthUserElement = document.getElementById("otp-auth-user");
 
 const orderForm = document.getElementById("order-form");
 const orderCustomerSelect = document.getElementById("order-customer");
@@ -132,6 +189,22 @@ const analyticsMonthlyChartElement = document.getElementById("analytics-monthly-
 const analyticsYearlyChartElement = document.getElementById("analytics-yearly-chart");
 const analyticsForecastDaysElement = document.getElementById("analytics-forecast-days");
 const analyticsForecastSkusElement = document.getElementById("analytics-forecast-skus");
+const salesMtdElement = document.getElementById("sales-mtd");
+const salesYtdElement = document.getElementById("sales-ytd");
+const salesTableElement = document.getElementById("sales-table");
+const ledgerSectionElement = document.getElementById("ledger-section");
+const ledgerTitleElement = document.getElementById("ledger-title");
+const ledgerSubtitleElement = document.getElementById("ledger-subtitle");
+const ledgerPreviewElement = document.getElementById("ledger-preview");
+const downloadLedgerButton = document.getElementById("download-ledger");
+const paymentModalElement = document.getElementById("payment-modal");
+const paymentForm = document.getElementById("payment-form");
+const paymentCustomerNameInput = document.getElementById("payment-customer-name");
+const paymentDateInput = document.getElementById("payment-date");
+const paymentAmountInput = document.getElementById("payment-amount");
+const paymentNotesInput = document.getElementById("payment-notes");
+const closePaymentModalButton = document.getElementById("close-payment-modal");
+const paymentSaveFeedbackElement = document.getElementById("payment-save-feedback");
 
 document.querySelectorAll("[data-open-app]").forEach((button) => {
   button.addEventListener("click", () => openApp(button.dataset.openApp));
@@ -140,23 +213,41 @@ document.querySelectorAll("[data-toggle-card]").forEach((button) => {
   button.addEventListener("click", () => toggleCard(button.dataset.toggleCard));
 });
 
-saveDataButton.addEventListener("click", handleSaveData);
-saveDataHomeButton.addEventListener("click", handleSaveData);
+if (saveDataButton) saveDataButton.addEventListener("click", handleSaveData);
+if (saveDataHomeButton) saveDataHomeButton.addEventListener("click", handleSaveData);
+loginForm.addEventListener("submit", handleLoginSubmit);
+logoutButton.addEventListener("click", handleLogout);
 backToHomeButton.addEventListener("click", closeAppView);
-runMigrationButton.addEventListener("click", runMigration);
+if (runMigrationButton) runMigrationButton.addEventListener("click", runMigration);
 blackTrayMultiplierInput.addEventListener("change", handleBlackTrayMultiplierInput);
+if (addCropButton) addCropButton.addEventListener("click", handleAddCrop);
 customerForm.addEventListener("submit", handleCustomerSubmit);
 addChefButton.addEventListener("click", () => addChefRow());
 resetCustomerFormButton.addEventListener("click", resetCustomerForm);
 billingPaymentCycleTypeInput.addEventListener("change", syncCustomerBillingTermFields);
 skuForm.addEventListener("submit", handleSkuSubmit);
 resetSkuFormButton.addEventListener("click", resetSkuForm);
+titleForm.addEventListener("submit", handleTitleSubmit);
+resetTitleFormButton.addEventListener("click", resetTitleForm);
+userForm.addEventListener("submit", handleUserSubmit);
+resetUserFormButton.addEventListener("click", resetUserForm);
+otpUserSelect.addEventListener("change", handleOtpUserSelection);
+otpModeSelect.addEventListener("change", handleOtpModeChange);
+sendOtpButton.addEventListener("click", handleSendOtp);
+verifyOtpButton.addEventListener("click", handleVerifyOtp);
+resetOtpButton.addEventListener("click", handleResetOtpSession);
 orderCustomerSelect.addEventListener("change", handleOrderCustomerSelection);
 orderDateInput.addEventListener("change", updateOrderDueDateFromSelection);
 addOrderItemButton.addEventListener("click", () => addOrderItemRow());
 orderForm.addEventListener("submit", handleOrderSubmit);
 resetOrderFormButton.addEventListener("click", resetOrderForm);
-downloadInvoiceButton.addEventListener("click", handleDownloadInvoice);
+if (downloadInvoiceButton) downloadInvoiceButton.addEventListener("click", () => handleDownloadInvoice());
+if (downloadLedgerButton) downloadLedgerButton.addEventListener("click", handleDownloadLedger);
+paymentForm.addEventListener("submit", handlePaymentSubmit);
+closePaymentModalButton.addEventListener("click", closePaymentModal);
+paymentModalElement.addEventListener("click", (event) => {
+  if (event.target === paymentModalElement) closePaymentModal();
+});
 document.addEventListener("click", (event) => {
   if (!event.target.closest(".box-cell--interactive") && activeProjectedBoxTooltipKey) {
     activeProjectedBoxTooltipKey = "";
@@ -174,7 +265,10 @@ function createDefaultState() {
     seeding: createEmptySeedingData([]),
     customers: [],
     skus: [],
+    titles: [],
+    users: [],
     orders: [],
+    payments: [],
   };
 }
 
@@ -197,10 +291,12 @@ function renderAll() {
   renderYield();
   renderCustomers();
   renderSkus();
+  renderUserManagement();
+  renderOtpApp();
   renderOrdering();
   renderAnalytics();
-  saveDataButton.textContent = "Save";
-  saveDataHomeButton.textContent = "Save Data to Firebase";
+  renderSales();
+  updateAuthUI();
 }
 
 function renderYield() {
@@ -224,6 +320,7 @@ function renderConfigTable() {
         <th>Harvest Days</th>
         <th>Green Yield (boxes)</th>
         <th>Black Yield (boxes)</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody>
@@ -236,11 +333,15 @@ function renderConfigTable() {
           <td><input class="data-input config-input" type="number" min="1" step="1" value="${crop.harvestDays}" data-crop-id="${crop.id}" data-field="harvestDays"></td>
           <td><input class="data-input config-input" type="number" min="0" step="0.05" value="${formatNumber(crop.greenTrayYieldBoxes)}" data-crop-id="${crop.id}" data-field="greenTrayYieldBoxes"></td>
           <td>${formatNumber(crop.greenTrayYieldBoxes * state.blackTrayMultiplier)}</td>
+          <td><button class="list-action list-action--danger crop-action" type="button" data-remove-crop="${crop.id}">Remove</button></td>
         </tr>
       `).join("")}
     </tbody>
   `;
   configTable.querySelectorAll(".config-input").forEach((input) => input.addEventListener("change", handleConfigInput));
+  configTable.querySelectorAll("[data-remove-crop]").forEach((button) => {
+    button.addEventListener("click", () => handleRemoveCrop(button.dataset.removeCrop));
+  });
 }
 
 function renderSeedingTable() {
@@ -286,7 +387,7 @@ function renderSeedingTable() {
       </tr>
     </tbody>
   `;
-  seedingTable.querySelectorAll(".seeding-input").forEach((input) => input.addEventListener("input", handleSeedingInput));
+  seedingTable.querySelectorAll(".seeding-input").forEach((input) => input.addEventListener("change", handleSeedingInput));
 }
 
 function renderBoxesTable() {
@@ -344,8 +445,9 @@ function renderCustomers() {
         <div class="list-card__header">
           <div>
             <h4>${escapeHtml(customer.customerName)}</h4>
-            <div class="list-card__meta">
+          <div class="list-card__meta">
               <span>Code: ${escapeHtml(customer.customerCode || "-")}</span>
+              <span>Invoicing: ${escapeHtml(formatInvoicingType(customer.invoicingType))}</span>
               <span>${escapeHtml(customer.billing.organization || "No organization")}</span>
             </div>
           </div>
@@ -390,6 +492,135 @@ function renderSkus() {
   skuListElement.querySelectorAll("[data-delete-sku]").forEach((button) => button.addEventListener("click", () => deleteSku(button.dataset.deleteSku)));
 }
 
+function renderUserManagement() {
+  renderTitles();
+  renderUsers();
+  syncUserFormOptions();
+  syncOtpUserOptions();
+}
+
+function renderOtpApp() {
+  syncOtpUserOptions();
+  updateOtpAuthUserDisplay(otpAuth?.currentUser || null);
+  if (!otpModeSelect.value) otpModeSelect.value = "test";
+  if (!otpStatusElement.textContent || otpStatusElement.textContent === "Firebase Auth SDK not initialized yet.") {
+    setOtpStatus(getOtpReadinessMessage(), firebaseOtpAvailable() ? "neutral" : "error");
+  }
+}
+
+function renderTitles() {
+  titleFormTitleElement.textContent = editingTitleId ? "Edit Title" : "New Title";
+  titleListElement.innerHTML = state.titles.length
+    ? state.titles.map((title) => `
+      <article class="list-card">
+        <div class="list-card__header">
+          <div>
+            <h4>${escapeHtml(title.name)}</h4>
+            <div class="list-card__meta">
+              <span>${escapeHtml(title.description || "No description")}</span>
+            </div>
+          </div>
+          <div class="list-card__actions">
+            <button class="list-action" type="button" data-edit-title="${title.id}">Edit</button>
+            <button class="list-action list-action--danger" type="button" data-delete-title="${title.id}">Delete</button>
+          </div>
+        </div>
+      </article>
+    `).join("")
+    : `<div class="empty-state">No titles yet.</div>`;
+
+  titleListElement.querySelectorAll("[data-edit-title]").forEach((button) => {
+    button.addEventListener("click", () => startEditingTitle(button.dataset.editTitle));
+  });
+  titleListElement.querySelectorAll("[data-delete-title]").forEach((button) => {
+    button.addEventListener("click", () => deleteTitle(button.dataset.deleteTitle));
+  });
+}
+
+function renderUsers() {
+  userFormTitleElement.textContent = editingUserId ? "Edit User" : "New User";
+  userListElement.innerHTML = state.users.length
+    ? state.users.map((user) => {
+      const title = findTitleById(user.titleId);
+      const manager = findUserById(user.reportingManagerId);
+      return `
+        <article class="list-card">
+          <div class="list-card__header">
+            <div>
+              <h4>${escapeHtml(getUserFullName(user))}</h4>
+              <div class="list-card__meta">
+                <span>Username: ${escapeHtml(user.username || "-")}</span>
+                <span>Title: ${escapeHtml(title?.name || "Unassigned")}</span>
+                <span>Reporting Manager: ${escapeHtml(manager ? getUserFullName(manager) : "-")}</span>
+                <span>Phone: ${escapeHtml(user.phoneNumber)}</span>
+                <span>Email: ${escapeHtml(user.emailAddress || "-")}</span>
+              </div>
+            </div>
+            <div class="list-card__actions">
+              <button class="list-action" type="button" data-edit-user="${user.id}">Edit</button>
+              <button class="list-action list-action--danger" type="button" data-delete-user="${user.id}">Delete</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }).join("")
+    : `<div class="empty-state">No users yet.</div>`;
+
+  userListElement.querySelectorAll("[data-edit-user]").forEach((button) => {
+    button.addEventListener("click", () => startEditingUser(button.dataset.editUser));
+  });
+  userListElement.querySelectorAll("[data-delete-user]").forEach((button) => {
+    button.addEventListener("click", () => deleteUser(button.dataset.deleteUser));
+  });
+}
+
+function syncUserFormOptions() {
+  const selectedTitleId = userTitleSelect.value;
+  const selectedManagerId = userReportingManagerSelect.value;
+  userTitleSelect.innerHTML = buildTitleOptions(selectedTitleId);
+  userReportingManagerSelect.innerHTML = buildManagerOptions(editingUserId, selectedManagerId);
+}
+
+function buildTitleOptions(selectedTitleId = "") {
+  const options = ['<option value="">Select title</option>'];
+  state.titles
+    .slice()
+    .sort((left, right) => left.name.localeCompare(right.name))
+    .forEach((title) => {
+      const selected = title.id === selectedTitleId ? " selected" : "";
+      options.push(`<option value="${title.id}"${selected}>${escapeHtml(title.name)}</option>`);
+    });
+  return options.join("");
+}
+
+function buildManagerOptions(excludedUserId = "", selectedManagerId = "") {
+  const options = ['<option value="">No reporting manager</option>'];
+  state.users
+    .filter((user) => user.id !== excludedUserId)
+    .slice()
+    .sort((left, right) => getUserFullName(left).localeCompare(getUserFullName(right)))
+    .forEach((user) => {
+      const selected = user.id === selectedManagerId ? " selected" : "";
+      options.push(`<option value="${user.id}"${selected}>${escapeHtml(getUserFullName(user))}</option>`);
+    });
+  return options.join("");
+}
+
+function syncOtpUserOptions(selectedUserId = otpUserSelect.value) {
+  if (!otpUserSelect) return;
+  const options = ['<option value="">Manual phone entry</option>'];
+  state.users
+    .filter((user) => user.phoneNumber)
+    .slice()
+    .sort((left, right) => getUserFullName(left).localeCompare(getUserFullName(right)))
+    .forEach((user) => {
+      const selected = user.id === selectedUserId ? " selected" : "";
+      options.push(`<option value="${user.id}"${selected}>${escapeHtml(getUserFullName(user))} - ${escapeHtml(user.phoneNumber)}</option>`);
+    });
+  otpUserSelect.innerHTML = options.join("");
+  otpUserSelect.value = state.users.some((user) => user.id === selectedUserId) ? selectedUserId : "";
+}
+
 function renderOrdering() {
   renderOrderCustomerOptions();
   refreshOrderItemSkuOptions();
@@ -397,10 +628,6 @@ function renderOrdering() {
   ensureOrderDefaults();
   if (!orderItemsElement.children.length) {
     addOrderItemRow();
-  }
-  if (!currentInvoiceOrderId) {
-    invoicePreviewElement.className = "invoice-preview empty-state";
-    invoicePreviewElement.textContent = "Save an order, then choose Generate Invoice from the saved orders list.";
   }
 }
 
@@ -444,7 +671,7 @@ function renderOrdersList() {
               </div>
               <div class="list-card__actions">
                 <button class="list-action" type="button" data-edit-order="${order.id}">Edit</button>
-                <button class="list-action" type="button" data-generate-invoice="${order.id}">Generate Invoice</button>
+                <button class="list-action" type="button" data-generate-invoice="${order.id}">Download Invoice</button>
                 <button class="list-action list-action--danger" type="button" data-delete-order="${order.id}">Delete</button>
               </div>
             </div>
@@ -466,7 +693,7 @@ function renderOrdersList() {
     });
   });
   ordersListElement.querySelectorAll("[data-edit-order]").forEach((button) => button.addEventListener("click", () => startEditingOrder(button.dataset.editOrder)));
-  ordersListElement.querySelectorAll("[data-generate-invoice]").forEach((button) => button.addEventListener("click", () => generateInvoiceFromOrder(button.dataset.generateInvoice)));
+  ordersListElement.querySelectorAll("[data-generate-invoice]").forEach((button) => button.addEventListener("click", () => handleDownloadInvoice(button.dataset.generateInvoice)));
   ordersListElement.querySelectorAll("[data-delete-order]").forEach((button) => button.addEventListener("click", () => deleteOrder(button.dataset.deleteOrder)));
   ordersListElement.querySelectorAll("[data-orders-page]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -509,6 +736,47 @@ function renderAnalytics() {
   analyticsForecastTotalElement.textContent = formatNumber(forecast.totalBoxes);
   renderForecastDays(forecast.byDay);
   renderForecastSkus(forecast.bySku);
+}
+
+function renderSales() {
+  if (!salesTableElement) return;
+
+  const salesSummary = buildSalesSummary();
+  salesMtdElement.textContent = formatCurrency(salesSummary.mtdSales);
+  salesYtdElement.textContent = formatCurrency(salesSummary.ytdSales);
+  salesTableElement.innerHTML = `
+    <thead>
+      <tr>
+        <th class="sticky-column">Customer Name</th>
+        <th>Total Sale</th>
+        <th>Total Amount Due</th>
+        <th>Amount Received</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${salesSummary.rows.map((row) => `
+        <tr>
+          <td class="sticky-column">${escapeHtml(row.customerNamesLabel)}</td>
+          <td>${formatCurrency(row.totalSale)}</td>
+          <td>${formatCurrency(row.totalDue)}</td>
+          <td>${formatCurrency(row.amountReceived)}</td>
+          <td>
+            <div class="table-action-group">
+              <button class="list-action" type="button" data-open-payment="${escapeAttribute(row.billingOrganizationKey)}">Amount Received</button>
+              <button class="list-action" type="button" data-open-ledger="${escapeAttribute(row.billingOrganizationKey)}">Download Ledger</button>
+            </div>
+          </td>
+        </tr>
+      `).join("")}
+    </tbody>
+  `;
+  salesTableElement.querySelectorAll("[data-open-payment]").forEach((button) => {
+    button.addEventListener("click", () => openPaymentModal(button.dataset.openPayment));
+  });
+  salesTableElement.querySelectorAll("[data-open-ledger]").forEach((button) => {
+    button.addEventListener("click", () => handleDownloadLedger(button.dataset.openLedger));
+  });
 }
 
 function getOrderDisplayCustomerName(order) {
@@ -620,15 +888,20 @@ function getOrdinalSuffix(day) {
 }
 
 function openApp(appKey) {
+  if (!activeUserId) return;
   landingView.classList.add("hidden");
   appView.classList.remove("hidden");
   Object.entries(appPanels).forEach(([key, panel]) => panel.classList.toggle("hidden", key !== appKey));
   activeAppTagElement.textContent = appMeta[appKey].tag;
   activeAppTitleElement.textContent = appMeta[appKey].title;
   activeAppSubtitleElement.textContent = appMeta[appKey].subtitle;
+  if (appKey === "otp") renderOtpApp();
+  if (appKey === "analytics") renderAnalytics();
+  if (appKey === "sales") renderSales();
 }
 
 function closeAppView() {
+  if (!activeUserId) return;
   appView.classList.add("hidden");
   landingView.classList.remove("hidden");
 }
@@ -663,6 +936,29 @@ function handleSeedingInput(event) {
   markDirty();
 }
 
+function handleAddCrop() {
+  const nextIndex = state.crops.length + 1;
+  const referenceCrop = state.crops[state.crops.length - 1] || {};
+  const crop = {
+    id: createId("crop"),
+    name: `New Microgreen ${nextIndex}`,
+    greenSeedGrams: toPositiveNumber(referenceCrop.greenSeedGrams, 300),
+    harvestDays: toPositiveInteger(referenceCrop.harvestDays, DEFAULT_REFERENCE_HARVEST_DAYS),
+    greenTrayYieldBoxes: toPositiveNumber(referenceCrop.greenTrayYieldBoxes, 8),
+  };
+  state.crops.push(crop);
+  initializeCropSeedingState(crop.id);
+  renderYield();
+  markDirty({ immediate: true });
+}
+
+function handleRemoveCrop(cropId) {
+  state.crops = state.crops.filter((crop) => crop.id !== cropId);
+  delete state.seeding[cropId];
+  renderYield();
+  markDirty({ immediate: true });
+}
+
 function handleCustomerSubmit(event) {
   event.preventDefault();
   const billing = buildBillingFromCustomerForm();
@@ -673,6 +969,7 @@ function handleCustomerSubmit(event) {
     mapLink: document.getElementById("customer-map-link").value.trim(),
     contactName: document.getElementById("customer-contact-name").value.trim(),
     contactNumber: document.getElementById("customer-contact-number").value.trim(),
+    invoicingType: normalizeInvoicingType(customerInvoicingTypeInput.value),
     billing,
     chefs: collectChefRows(),
   };
@@ -681,7 +978,9 @@ function handleCustomerSubmit(event) {
   resetCustomerFormFields();
   renderCustomers();
   renderOrdering();
-  markDirty();
+  renderSales();
+  markDirty({ immediate: true });
+  showSaveFeedback(customerSaveFeedbackElement);
 }
 
 function addChefRow(chef = { name: "", phone: "", notes: "" }) {
@@ -715,6 +1014,7 @@ function startEditingCustomer(customerId) {
   document.getElementById("customer-map-link").value = customer.mapLink;
   document.getElementById("customer-contact-name").value = customer.contactName;
   document.getElementById("customer-contact-number").value = customer.contactNumber;
+  customerInvoicingTypeInput.value = normalizeInvoicingType(customer.invoicingType);
   document.getElementById("billing-organization").value = billing.organization;
   document.getElementById("billing-address").value = billing.address;
   document.getElementById("billing-gst").value = billing.gst;
@@ -729,9 +1029,11 @@ function startEditingCustomer(customerId) {
 
 function deleteCustomer(customerId) {
   state.customers = state.customers.filter((customer) => customer.id !== customerId);
+  state.payments = state.payments.filter((payment) => payment.customerId !== customerId);
   renderCustomers();
   renderOrdering();
-  markDirty();
+  renderSales();
+  markDirty({ immediate: true });
 }
 
 function resetCustomerForm() {
@@ -741,6 +1043,7 @@ function resetCustomerForm() {
 
 function resetCustomerFormFields() {
   customerForm.reset();
+  customerInvoicingTypeInput.value = "formal";
   billingPaymentCycleTypeInput.value = "days";
   billingPaymentCycleDaysInput.value = "30";
   billingPaymentCycleDayInput.value = "";
@@ -781,7 +1084,69 @@ function handleSkuSubmit(event) {
   skuForm.reset();
   renderSkus();
   renderOrdering();
-  markDirty();
+  markDirty({ immediate: true });
+  showSaveFeedback(skuSaveFeedbackElement);
+}
+
+function handleTitleSubmit(event) {
+  event.preventDefault();
+  const name = document.getElementById("job-title-name").value.trim();
+  const description = document.getElementById("job-title-description").value.trim();
+  if (!name || !description) return;
+  const payload = {
+    id: editingTitleId || createId("title"),
+    name,
+    description,
+  };
+  const index = state.titles.findIndex((title) => title.id === payload.id);
+  if (index >= 0) state.titles[index] = payload;
+  else state.titles.push(payload);
+  editingTitleId = null;
+  resetTitleFormFields();
+  renderUserManagement();
+  markDirty({ immediate: true });
+  showSaveFeedback(titleSaveFeedbackElement);
+}
+
+async function handleUserSubmit(event) {
+  event.preventDefault();
+  try {
+    const firstName = document.getElementById("user-first-name").value.trim();
+    const lastName = document.getElementById("user-last-name").value.trim();
+    const username = document.getElementById("user-username").value.trim();
+    const passwordInput = document.getElementById("user-password");
+    const password = passwordInput.value.trim();
+    const phoneNumber = document.getElementById("user-phone-number").value.trim();
+    const existingUser = editingUserId ? findUserById(editingUserId) : null;
+    const passwordHash = password
+      ? await hashPassword(password)
+      : String(existingUser?.passwordHash || existingUser?.password || "").trim();
+    if (!firstName || !lastName || !username || !passwordHash || !phoneNumber || !userTitleSelect.value) return;
+    const payload = {
+      id: editingUserId || createId("user"),
+      firstName,
+      lastName,
+      username,
+      passwordHash,
+      titleId: userTitleSelect.value,
+      reportingManagerId: userReportingManagerSelect.value,
+      phoneNumber,
+      emailAddress: document.getElementById("user-email-address").value.trim(),
+    };
+    if (payload.reportingManagerId === payload.id) {
+      payload.reportingManagerId = "";
+    }
+    const index = state.users.findIndex((user) => user.id === payload.id);
+    if (index >= 0) state.users[index] = payload;
+    else state.users.push(payload);
+    editingUserId = null;
+    resetUserFormFields();
+    renderUserManagement();
+    markDirty({ immediate: true });
+    showSaveFeedback(userSaveFeedbackElement);
+  } catch (error) {
+    setSyncStatus(String(error?.message || "Unable to hash the password."));
+  }
 }
 
 function startEditingSku(skuId) {
@@ -793,16 +1158,182 @@ function startEditingSku(skuId) {
   document.getElementById("sku-hsn").value = sku.hsn;
 }
 
+function startEditingTitle(titleId) {
+  const title = findTitleById(titleId);
+  if (!title) return;
+  editingTitleId = title.id;
+  document.getElementById("job-title-name").value = title.name;
+  document.getElementById("job-title-description").value = title.description || "";
+  renderTitles();
+}
+
+function startEditingUser(userId) {
+  const user = findUserById(userId);
+  if (!user) return;
+  editingUserId = user.id;
+  document.getElementById("user-first-name").value = user.firstName;
+  document.getElementById("user-last-name").value = user.lastName;
+  document.getElementById("user-username").value = user.username || "";
+  document.getElementById("user-password").value = "";
+  document.getElementById("user-phone-number").value = user.phoneNumber;
+  document.getElementById("user-email-address").value = user.emailAddress || "";
+  syncUserPasswordRequirement();
+  syncUserFormOptions();
+  userTitleSelect.value = user.titleId || "";
+  userReportingManagerSelect.value = user.reportingManagerId || "";
+  renderUsers();
+}
+
 function deleteSku(skuId) {
   state.skus = state.skus.filter((sku) => sku.id !== skuId);
   renderSkus();
   renderOrdering();
-  markDirty();
+  markDirty({ immediate: true });
+}
+
+function deleteTitle(titleId) {
+  state.titles = state.titles.filter((title) => title.id !== titleId);
+  state.users = state.users.map((user) => ({
+    ...user,
+    titleId: user.titleId === titleId ? "" : user.titleId,
+  }));
+  if (editingTitleId === titleId) {
+    editingTitleId = null;
+    resetTitleFormFields();
+  }
+  renderUserManagement();
+  markDirty({ immediate: true });
+}
+
+function deleteUser(userId) {
+  state.users = state.users
+    .filter((user) => user.id !== userId)
+    .map((user) => ({
+      ...user,
+      reportingManagerId: user.reportingManagerId === userId ? "" : user.reportingManagerId,
+    }));
+  if (editingUserId === userId) {
+    editingUserId = null;
+    resetUserFormFields();
+  }
+  renderUserManagement();
+  markDirty({ immediate: true });
 }
 
 function resetSkuForm() {
   editingSkuId = null;
   skuForm.reset();
+}
+
+function resetTitleForm() {
+  editingTitleId = null;
+  resetTitleFormFields();
+  renderTitles();
+}
+
+function resetTitleFormFields() {
+  titleForm.reset();
+}
+
+function resetUserForm() {
+  editingUserId = null;
+  resetUserFormFields();
+  renderUsers();
+}
+
+function resetUserFormFields() {
+  userForm.reset();
+  syncUserPasswordRequirement();
+  syncUserFormOptions();
+  userTitleSelect.value = "";
+  userReportingManagerSelect.value = "";
+}
+
+function syncUserPasswordRequirement() {
+  const passwordInput = document.getElementById("user-password");
+  if (!passwordInput) return;
+  passwordInput.required = !editingUserId;
+  passwordInput.placeholder = editingUserId ? "Leave blank to keep current password" : "";
+}
+
+function handleOtpUserSelection() {
+  const user = findUserById(otpUserSelect.value);
+  if (!user) return;
+  otpPhoneNumberInput.value = user.phoneNumber || "";
+  if (isValidOtpPhoneNumber(otpPhoneNumberInput.value.trim())) {
+    setOtpStatus("Selected user's phone is ready for OTP testing.", "neutral");
+  } else {
+    setOtpStatus("Selected user's phone must be converted to E.164 format, for example +919876543210.", "error");
+  }
+}
+
+function handleOtpModeChange() {
+  otpConfirmationResult = null;
+  otpCodeInput.value = "";
+  resetOtpVerifierState();
+  if (otpModeSelect.value === "test") {
+    setOtpStatus("Test mode enabled. Firebase test phone numbers do not require a real SMS and should auto-resolve app verification.", "neutral");
+  } else {
+    setOtpStatus("Live mode enabled. Complete the reCAPTCHA challenge and Firebase will attempt a real SMS send.", "neutral");
+  }
+}
+
+async function handleSendOtp() {
+  const phoneNumber = otpPhoneNumberInput.value.trim();
+  if (!isValidOtpPhoneNumber(phoneNumber)) {
+    setOtpStatus("Enter a valid E.164 phone number, for example +919876543210.", "error");
+    return;
+  }
+
+  sendOtpButton.disabled = true;
+  try {
+    const auth = await ensureOtpAuthReady();
+    const appVerifier = await ensureOtpRecaptchaVerifier();
+    otpConfirmationResult = await auth.signInWithPhoneNumber(phoneNumber, appVerifier);
+    otpCodeInput.focus();
+    setOtpStatus(`OTP sent to ${phoneNumber}. Enter the 6-digit code to verify.`, "success");
+  } catch (error) {
+    resetOtpRecaptcha();
+    setOtpStatus(getOtpErrorMessage(error), "error");
+  } finally {
+    sendOtpButton.disabled = false;
+  }
+}
+
+async function handleVerifyOtp() {
+  const code = otpCodeInput.value.trim();
+  if (!otpConfirmationResult) {
+    setOtpStatus("Send an OTP first.", "error");
+    return;
+  }
+  if (!/^\d{6}$/.test(code)) {
+    setOtpStatus("Enter the 6-digit OTP code.", "error");
+    return;
+  }
+
+  verifyOtpButton.disabled = true;
+  try {
+    const result = await otpConfirmationResult.confirm(code);
+    updateOtpAuthUserDisplay(result.user);
+    setOtpStatus(`OTP verified for ${result.user.phoneNumber || "the selected number"}.`, "success");
+  } catch (error) {
+    setOtpStatus(getOtpErrorMessage(error), "error");
+  } finally {
+    verifyOtpButton.disabled = false;
+  }
+}
+
+async function handleResetOtpSession() {
+  otpConfirmationResult = null;
+  otpCodeInput.value = "";
+  otpPhoneNumberInput.value = "";
+  otpUserSelect.value = "";
+  resetOtpVerifierState();
+  if (otpAuth?.currentUser) {
+    await otpAuth.signOut();
+  }
+  updateOtpAuthUserDisplay(null);
+  setOtpStatus("OTP test session reset.", "neutral");
 }
 
 function handleOrderCustomerSelection() {
@@ -814,6 +1345,9 @@ function handleOrderCustomerSelection() {
     orderBillingGstInput.value = "";
     orderBillingPhoneInput.value = "";
     orderBillingPaymentCycleInput.value = "";
+    if (!editingOrderId) {
+      orderInvoiceNumberInput.value = getNextInvoiceNumber();
+    }
     updateOrderDueDateFromSelection();
     return;
   }
@@ -824,6 +1358,9 @@ function handleOrderCustomerSelection() {
   orderBillingGstInput.value = billing.gst || "";
   orderBillingPhoneInput.value = billing.phone || "";
   orderBillingPaymentCycleInput.value = billing.paymentCycle || "";
+  if (!editingOrderId) {
+    orderInvoiceNumberInput.value = getNextInvoiceNumber(customer);
+  }
   updateOrderDueDateFromSelection();
 }
 
@@ -858,7 +1395,7 @@ function addOrderItemRow(item = { skuId: "", quantity: 1, price: "", amount: "" 
   const amountInput = row.querySelector('[data-order-field="amount"]');
 
   skuSelect.addEventListener("change", () => applyOrderItemDefaults(row, { resetPrice: true, resetAmount: true }));
-  quantityInput.addEventListener("input", () => applyOrderItemDefaults(row, { resetPrice: true, resetAmount: true }));
+  quantityInput.addEventListener("change", () => applyOrderItemDefaults(row, { resetPrice: true, resetAmount: true }));
   row.querySelector("button").addEventListener("click", () => row.remove());
   orderItemsElement.appendChild(row);
   if (!initialPrice && !initialAmount) {
@@ -936,6 +1473,7 @@ function handleOrderSubmit(event) {
 
   const customerPayload = {
     ...selectedCustomer,
+    invoicingType: normalizeInvoicingType(selectedCustomer.invoicingType),
     customerCode: orderCustomerCodeInput.value.trim(),
     billing: normalizedBilling,
   };
@@ -950,9 +1488,10 @@ function handleOrderSubmit(event) {
     customerId: customerPayload.id,
     customerName: customerPayload.customerName,
     customerCode: customerPayload.customerCode,
+    invoicingType: customerPayload.invoicingType,
     billing: { ...normalizedBilling },
     date: orderDateInput.value || toInputDate(today),
-    invoiceNumber: orderInvoiceNumberInput.value.trim() || getNextInvoiceNumber(),
+    invoiceNumber: orderInvoiceNumberInput.value.trim() || getNextInvoiceNumber(customerPayload),
     dueDate: computeDueDateForBilling(normalizedBilling, orderDateInput.value || toInputDate(today)),
     discountPercent,
     subtotal,
@@ -971,8 +1510,11 @@ function handleOrderSubmit(event) {
   resetOrderForm();
   renderCustomers();
   renderOrdering();
-  markDirty();
-  setSyncStatus("Order draft saved");
+  renderAnalytics();
+  renderSales();
+  markDirty({ immediate: true });
+  setSyncStatus("Order saved");
+  showSaveFeedback(orderSaveFeedbackElement);
 }
 
 function startEditingOrder(orderId) {
@@ -1004,7 +1546,9 @@ function deleteOrder(orderId) {
     currentInvoiceOrderId = null;
   }
   renderOrdering();
-  markDirty();
+  renderAnalytics();
+  renderSales();
+  markDirty({ immediate: true });
 }
 
 function resetOrderForm() {
@@ -1020,36 +1564,40 @@ function resetOrderForm() {
 function ensureOrderDefaults() {
   if (!orderDateInput.value) orderDateInput.value = toInputDate(today);
   if (!editingOrderId) {
-    orderInvoiceNumberInput.value = getNextInvoiceNumber();
+    const selectedCustomer = state.customers.find((item) => item.id === orderCustomerSelect.value) || null;
+    orderInvoiceNumberInput.value = getNextInvoiceNumber(selectedCustomer);
     updateOrderDueDateFromSelection();
   }
   if (!orderDiscountPercentInput.value) orderDiscountPercentInput.value = "0";
 }
 
 function generateInvoiceFromOrder(orderId) {
-  const order = state.orders.find((item) => item.id === orderId);
-  if (!order) return;
-  currentInvoiceOrderId = orderId;
-  invoicePreviewElement.className = "invoice-preview";
-  invoicePreviewElement.innerHTML = `<div class="invoice-sheet"><div class="invoice-top"><div class="invoice-brand"><img src="${companyDetails.logoPath}" alt="Leaf Over Logic logo" class="invoice-logo"><h3>${escapeHtml(companyDetails.name)}</h3>${companyDetails.address.map((line) => `<div>${escapeHtml(line)}</div>`).join("")}<div>Phone: ${escapeHtml(companyDetails.phone)}</div><div>Website: ${escapeHtml(companyDetails.website)}</div></div><div class="invoice-meta"><h3>INVOICE</h3><table><tr><td>DATE</td><td>${formatInvoiceDate(order.date)}</td></tr><tr><td>INVOICE #</td><td>${escapeHtml(order.invoiceNumber)}</td></tr><tr><td>CUSTOMER ID</td><td>${escapeHtml(order.customerCode)}</td></tr><tr><td>DUE DATE</td><td>${formatInvoiceDate(order.dueDate)}</td></tr></table></div></div><div class="invoice-grid"><div class="invoice-block"><h4>BILL TO</h4><div class="invoice-block__body"><div>${escapeHtml(order.billing.organization || order.customerName)}</div>${order.billing.address.split("\n").filter(Boolean).map((line) => `<div>${escapeHtml(line)}</div>`).join("")}<div>GSTIN/UIN: ${escapeHtml(order.billing.gst || "-")}</div><div>Ph: ${escapeHtml(order.billing.phone || "-")}</div></div></div><div class="invoice-block"><h4>Account Details</h4><div class="invoice-block__body"><div>Beneficiary Name: ${escapeHtml(companyDetails.account.beneficiary)}</div><div>Account Number: ${escapeHtml(companyDetails.account.number)}</div><div>IFSC Code: ${escapeHtml(companyDetails.account.ifsc)}</div><div>Branch: ${escapeHtml(companyDetails.account.branch)}</div><div>Bank: ${escapeHtml(companyDetails.account.bank)}</div></div></div></div><table class="invoice-table"><thead><tr><th>No.</th><th>Product</th><th>Description</th><th>HSN</th><th>QTY</th><th>MRP</th><th>AMOUNT</th></tr></thead><tbody>${order.items.map((item, index) => `<tr><td>${index + 1}</td><td>Rozana Greens Microgreens</td><td>${escapeHtml(item.description)}</td><td>${escapeHtml(item.hsn)}</td><td>${item.quantity}</td><td>${formatCurrency(item.price)}</td><td>${formatCurrency(item.amount)}</td></tr>`).join("")}</tbody></table><div class="invoice-grid"><div class="invoice-terms"><h4>Terms & Conditions</h4><div class="invoice-terms__body"><div>1. ${escapeHtml(getInvoicePaymentTermsText(order.billing))}</div><div>2. Please include the invoice number on your check</div></div></div><div class="invoice-total"><div class="invoice-total__row"><span>Subtotal</span><strong>${formatCurrency(order.subtotal)}</strong></div><div class="invoice-total__row"><span>Discount</span><strong>${formatCurrency(order.discountAmount)}</strong></div><div class="invoice-total__row"><span>GST amount</span><strong>-</strong></div><div class="invoice-total__row"><span>Other</span><strong>-</strong></div><div class="invoice-total__row invoice-total__row--strong"><span>TOTAL</span><strong>${formatCurrency(order.total)}</strong></div><div style="margin-top:12px;">Make all checks payable to ${escapeHtml(companyDetails.account.beneficiary)}</div></div></div><div class="invoice-footnote">If you have any questions about this invoice, please contact<br>${escapeHtml(companyDetails.contactFooter)}<br><strong>Thank You For Your Business!</strong></div></div>`;
+  handleDownloadInvoice(orderId);
 }
 
-function handleDownloadInvoice() {
-  if (!currentInvoiceOrderId) {
+function buildInvoiceMarkup(order) {
+  return `<div class="invoice-sheet"><div class="invoice-top"><div class="invoice-brand"><img src="${companyDetails.logoPath}" alt="Leaf Over Logic logo" class="invoice-logo"><h3>${escapeHtml(companyDetails.name)}</h3>${companyDetails.address.map((line) => `<div>${escapeHtml(line)}</div>`).join("")}<div>Phone: ${escapeHtml(companyDetails.phone)}</div><div>Website: ${escapeHtml(companyDetails.website)}</div></div><div class="invoice-meta"><h3>INVOICE</h3><table><tr><td>DATE</td><td>${formatInvoiceDate(order.date)}</td></tr><tr><td>INVOICE #</td><td>${escapeHtml(order.invoiceNumber)}</td></tr><tr><td>CUSTOMER ID</td><td>${escapeHtml(order.customerCode)}</td></tr><tr><td>DUE DATE</td><td>${formatInvoiceDate(order.dueDate)}</td></tr></table></div></div><div class="invoice-grid"><div class="invoice-block"><h4>BILL TO</h4><div class="invoice-block__body"><div>${escapeHtml(order.billing.organization || order.customerName)}</div>${order.billing.address.split("\n").filter(Boolean).map((line) => `<div>${escapeHtml(line)}</div>`).join("")}<div>GSTIN/UIN: ${escapeHtml(order.billing.gst || "-")}</div><div>Ph: ${escapeHtml(order.billing.phone || "-")}</div></div></div><div class="invoice-block"><h4>Account Details</h4><div class="invoice-block__body"><div>Beneficiary Name: ${escapeHtml(companyDetails.account.beneficiary)}</div><div>Account Number: ${escapeHtml(companyDetails.account.number)}</div><div>IFSC Code: ${escapeHtml(companyDetails.account.ifsc)}</div><div>Branch: ${escapeHtml(companyDetails.account.branch)}</div><div>Bank: ${escapeHtml(companyDetails.account.bank)}</div></div></div></div><table class="invoice-table"><thead><tr><th>No.</th><th>Product</th><th>Description</th><th>HSN</th><th>QTY</th><th>MRP</th><th>AMOUNT</th></tr></thead><tbody>${order.items.map((item, index) => `<tr><td>${index + 1}</td><td>Rozana Greens Microgreens</td><td>${escapeHtml(item.description)}</td><td>${escapeHtml(item.hsn)}</td><td>${item.quantity}</td><td>${formatCurrency(item.price)}</td><td>${formatCurrency(item.amount)}</td></tr>`).join("")}</tbody></table><div class="invoice-grid"><div class="invoice-terms"><h4>Terms & Conditions</h4><div class="invoice-terms__body"><div>1. ${escapeHtml(getInvoicePaymentTermsText(order.billing))}</div><div>2. Please include the invoice number on your check</div></div></div><div class="invoice-total"><div class="invoice-total__row"><span>Subtotal</span><strong>${formatCurrency(order.subtotal)}</strong></div><div class="invoice-total__row"><span>Discount</span><strong>${formatCurrency(order.discountAmount)}</strong></div><div class="invoice-total__row"><span>GST amount</span><strong>-</strong></div><div class="invoice-total__row"><span>Other</span><strong>-</strong></div><div class="invoice-total__row invoice-total__row--strong"><span>TOTAL</span><strong>${formatCurrency(order.total)}</strong></div><div style="margin-top:12px;">Make all checks payable to ${escapeHtml(companyDetails.account.beneficiary)}</div></div></div><div class="invoice-footnote">If you have any questions about this invoice, please contact<br>${escapeHtml(companyDetails.contactFooter)}<br><strong>Thank You For Your Business!</strong></div></div>`;
+}
+
+function handleDownloadInvoice(orderId = currentInvoiceOrderId) {
+  const order = state.orders.find((item) => item.id === orderId);
+  if (!order) {
     setSyncStatus("Generate invoice first");
     return;
   }
+  currentInvoiceOrderId = order.id;
+  const invoiceFileName = buildInvoiceFileName(order);
   const printWindow = window.open("", "_blank", "width=1200,height=900");
   const stylesheetUrl = new URL("styles.css", window.location.href).href;
   const printMarkup = `
     <html>
       <head>
-        <title>Invoice</title>
+        <title>${escapeHtml(invoiceFileName)}</title>
         <base href="${window.location.href}">
         <link rel="stylesheet" href="${stylesheetUrl}">
       </head>
       <body class="print-window">
-        ${invoicePreviewElement.innerHTML}
+        ${buildInvoiceMarkup(order)}
       </body>
     </html>
   `;
@@ -1063,7 +1611,72 @@ function handleDownloadInvoice() {
   }, { once: true });
 }
 
+function buildInvoiceFileName(order) {
+  const invoiceNumber = String(order?.invoiceNumber || "").trim() || "invoice";
+  const customerName = getOrderDisplayCustomerName(order || {});
+  const firstCustomerName = String(customerName || "")
+    .trim()
+    .split(/\s+/)
+    .find(Boolean) || "Customer";
+  const safeCustomerName = firstCustomerName.replace(/[^a-zA-Z0-9]/g, "") || "Customer";
+  return `${invoiceNumber}_Invoice_${safeCustomerName}`;
+}
+
+function openPaymentModal(billingOrganizationKey) {
+  const salesRow = buildSalesSummary().rows.find((row) => row.billingOrganizationKey === billingOrganizationKey);
+  if (!salesRow) {
+    setSyncStatus("Billing organization not found");
+    return;
+  }
+  paymentModalElement.dataset.billingOrganizationKey = salesRow.billingOrganizationKey;
+  paymentCustomerNameInput.value = salesRow.customerNamesLabel || "";
+  paymentDateInput.value = toInputDate(today);
+  paymentAmountInput.value = "";
+  paymentNotesInput.value = "";
+  paymentModalElement.classList.remove("hidden");
+}
+
+function closePaymentModal() {
+  paymentModalElement.classList.add("hidden");
+  paymentModalElement.dataset.billingOrganizationKey = "";
+  paymentForm.reset();
+}
+
+function handlePaymentSubmit(event) {
+  event.preventDefault();
+  const billingOrganizationKey = paymentModalElement.dataset.billingOrganizationKey || "";
+  const salesRow = buildSalesSummary().rows.find((row) => row.billingOrganizationKey === billingOrganizationKey);
+  const amount = toPositiveNumber(paymentAmountInput.value, 0);
+  if (!salesRow) {
+    setSyncStatus("Billing organization not found");
+    return;
+  }
+  if (amount <= 0) {
+    setSyncStatus("Enter a valid received amount");
+    return;
+  }
+
+  state.payments.push({
+    id: createId("payment"),
+    billingOrganizationKey: salesRow.billingOrganizationKey,
+    billingOrganization: salesRow.billingOrganization,
+    customerNamesLabel: salesRow.customerNamesLabel,
+    date: paymentDateInput.value || toInputDate(today),
+    amount,
+    notes: paymentNotesInput.value.trim(),
+  });
+
+  renderSales();
+  markDirty({ immediate: true });
+  setSyncStatus("Amount received recorded");
+  showSaveFeedback(paymentSaveFeedbackElement);
+  window.setTimeout(() => {
+    closePaymentModal();
+  }, 900);
+}
+
 function upsertCustomer(payload) {
+  payload.invoicingType = normalizeInvoicingType(payload.invoicingType);
   payload.billing = normalizeBilling(payload.billing);
   const index = state.customers.findIndex((customer) => customer.id === payload.id);
   if (index >= 0) state.customers[index] = payload;
@@ -1081,8 +1694,8 @@ async function runMigration() {
     state.orders = mergeOrdersByInvoice(state.orders, migratedOrders);
 
     renderAll();
-    markDirty();
-    setSyncStatus(`Migration data loaded (${migratedOrders.length} orders). Click Save.`);
+    markDirty({ immediate: true });
+    setSyncStatus(`Migration data loaded (${migratedOrders.length} orders).`);
   } catch (error) {
     console.error("Migration load failed:", error);
     setSyncStatus(`Migration failed: ${String(error?.message || "Unknown error").slice(0, 80)}`);
@@ -1090,21 +1703,15 @@ async function runMigration() {
 }
 
 async function handleSaveData() {
-  if (!isDirty) {
-    setSyncStatus("No new changes");
-    return;
-  }
-  if (!cloudSyncEnabled) {
-    setSyncStatus("Firebase unavailable");
-    return;
-  }
-  setSyncStatus("Saving...");
+  scheduleStateSave(0);
   await saveStateToFirebase();
 }
 
 async function initRemoteState() {
   if (!firebaseSettings.enabled || !hasFirebaseConfig(firebaseSettings.config)) {
     setSyncStatus("Firebase not configured");
+    renderOtpApp();
+    initializeAuthState();
     return;
   }
   try {
@@ -1124,15 +1731,27 @@ async function initRemoteState() {
       setSyncStatus("Firebase synced");
     } else {
       setSyncStatus("Firebase ready");
+      renderOtpApp();
     }
+    initializeAuthState();
   } catch (error) {
     cloudSyncEnabled = false;
     console.error("Firebase init failed:", error);
     setSyncStatus(getFirebaseErrorMessage(error, "Init failed"));
+    renderOtpApp();
+    initializeAuthState();
   }
 }
 
 async function saveStateToFirebase() {
+  if (saveInFlight) {
+    pendingImmediateSave = true;
+    return;
+  }
+  if (!cloudSyncEnabled || !isDirty) return;
+
+  const changeSequenceAtStart = changeSequence;
+  saveInFlight = true;
   try {
     const response = await fetch(getDatabaseRestUrl(), {
       method: "PUT",
@@ -1145,11 +1764,22 @@ async function saveStateToFirebase() {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    isDirty = false;
-    setSyncStatus("Saved to Firebase");
+    if (changeSequence === changeSequenceAtStart) {
+      isDirty = false;
+      setSyncStatus("Saved to Firebase");
+    } else {
+      setSyncStatus("Saving changes...");
+    }
   } catch (error) {
     console.error("Firebase save failed:", error);
     setSyncStatus(getFirebaseErrorMessage(error, "Save failed"));
+  } finally {
+    saveInFlight = false;
+    if (cloudSyncEnabled && isDirty) {
+      const nextDelay = pendingImmediateSave ? 0 : AUTO_SAVE_DELAY_MS;
+      pendingImmediateSave = false;
+      scheduleStateSave(nextDelay);
+    }
   }
 }
 
@@ -1160,7 +1790,10 @@ function serializeState() {
     seeding: state.seeding,
     customers: state.customers,
     skus: state.skus,
+    titles: state.titles,
+    users: state.users,
     orders: state.orders,
+    payments: state.payments,
   };
 }
 
@@ -1171,14 +1804,47 @@ function applySerializedState(rawState) {
   state.customers = Array.isArray(rawState.customers)
     ? rawState.customers.map((customer) => ({
       ...customer,
+      invoicingType: normalizeInvoicingType(customer.invoicingType),
       billing: normalizeBilling(customer.billing),
     }))
     : [];
   state.skus = Array.isArray(rawState.skus) ? rawState.skus : [];
+  state.titles = Array.isArray(rawState.titles)
+    ? rawState.titles.map((title) => ({
+      id: title.id || createId("title"),
+      name: String(title.name || "").trim(),
+      description: String(title.description || "").trim(),
+    })).filter((title) => title.name)
+    : [];
+  state.users = Array.isArray(rawState.users)
+    ? rawState.users.map((user) => ({
+      id: user.id || createId("user"),
+      firstName: String(user.firstName || "").trim(),
+      lastName: String(user.lastName || "").trim(),
+      username: String(user.username || "").trim(),
+      passwordHash: String(user.passwordHash || user.password || "").trim(),
+      titleId: String(user.titleId || "").trim(),
+      reportingManagerId: String(user.reportingManagerId || "").trim(),
+      phoneNumber: String(user.phoneNumber || "").trim(),
+      emailAddress: String(user.emailAddress || "").trim(),
+    })).filter((user) => user.firstName && user.lastName && user.username && user.passwordHash && user.phoneNumber)
+    : [];
   state.orders = Array.isArray(rawState.orders)
     ? rawState.orders.map((order) => ({
       ...order,
+      invoicingType: normalizeInvoicingType(order.invoicingType),
       billing: normalizeBilling(order.billing),
+    }))
+    : [];
+  state.payments = Array.isArray(rawState.payments)
+    ? rawState.payments.map((payment) => ({
+      ...payment,
+      billingOrganizationKey: payment.billingOrganizationKey || normalizeBillingOrganizationKey(payment.billingOrganization || payment.customerName || ""),
+      billingOrganization: payment.billingOrganization || "",
+      customerNamesLabel: payment.customerNamesLabel || payment.customerName || "",
+      amount: toPositiveNumber(payment.amount, 0),
+      date: payment.date || toInputDate(today),
+      notes: payment.notes || "",
     }))
     : [];
 }
@@ -1194,6 +1860,19 @@ function createSeedState(crops, savedSeeding) {
     });
   });
   return base;
+}
+
+function initializeCropSeedingState(cropId) {
+  state.seeding[cropId] = state.seeding[cropId] || {};
+  trayTypes.forEach((tray) => {
+    state.seeding[cropId][tray.id] = state.seeding[cropId][tray.id] || {};
+    seedingDates.forEach((date) => {
+      const key = toDateKey(date);
+      if (!Number.isFinite(state.seeding[cropId][tray.id][key])) {
+        state.seeding[cropId][tray.id][key] = 0;
+      }
+    });
+  });
 }
 
 function getDatabaseRestUrl() {
@@ -1214,9 +1893,203 @@ function getFirebaseErrorMessage(error, fallback) {
   return message ? `${fallback}: ${message.slice(0, 80)}` : fallback;
 }
 
-function markDirty() {
+function markDirty({ immediate = false } = {}) {
   isDirty = true;
-  setSyncStatus("Unsaved changes");
+  changeSequence += 1;
+  if (!cloudSyncEnabled) {
+    setSyncStatus(getUnavailableSyncMessage());
+    return;
+  }
+  scheduleStateSave(immediate ? 0 : AUTO_SAVE_DELAY_MS);
+}
+
+function scheduleStateSave(delay = AUTO_SAVE_DELAY_MS) {
+  if (!cloudSyncEnabled) return;
+  if (autoSaveTimerId) {
+    clearTimeout(autoSaveTimerId);
+  }
+  setSyncStatus(delay === 0 ? "Saving to Firebase..." : "Saving changes...");
+  autoSaveTimerId = window.setTimeout(() => {
+    autoSaveTimerId = null;
+    void saveStateToFirebase();
+  }, delay);
+}
+
+function getUnavailableSyncMessage() {
+  if (!firebaseSettings.enabled || !hasFirebaseConfig(firebaseSettings.config)) {
+    return "Firebase not configured";
+  }
+  return "Firebase unavailable";
+}
+
+function initializeAuthState() {
+  const storedUserId = window.sessionStorage.getItem("adminPortalActiveUserId") || "";
+  activeUserId = findUserById(storedUserId) ? storedUserId : "";
+  updateAuthUI();
+}
+
+async function handleLoginSubmit(event) {
+  event.preventDefault();
+  const username = document.getElementById("login-username").value.trim();
+  const password = document.getElementById("login-password").value;
+  if (!username || !password) {
+    setLoginStatus("Enter username and password.", "error");
+    return;
+  }
+
+  try {
+    const passwordHash = await hashPassword(password);
+    const matchedUser = state.users.find((user) => user.username === username && user.passwordHash === passwordHash);
+    if (!matchedUser) {
+      setLoginStatus("Invalid username or password.", "error");
+      return;
+    }
+    activeUserId = matchedUser.id;
+    window.sessionStorage.setItem("adminPortalActiveUserId", activeUserId);
+    loginForm.reset();
+    closeAppView();
+    updateAuthUI();
+    setLoginStatus("Login successful.", "neutral");
+  } catch (error) {
+    setLoginStatus(String(error?.message || "Unable to verify login."), "error");
+  }
+}
+
+function handleLogout() {
+  activeUserId = "";
+  window.sessionStorage.removeItem("adminPortalActiveUserId");
+  closeAppView();
+  updateAuthUI();
+  setLoginStatus("You have been logged out.", "neutral");
+}
+
+function updateAuthUI() {
+  const activeUser = findUserById(activeUserId);
+  const isLoggedIn = Boolean(activeUser);
+  loginView.classList.toggle("hidden", isLoggedIn);
+  appShell.classList.toggle("hidden", !isLoggedIn);
+  currentUserChip.textContent = isLoggedIn ? `Signed in: ${activeUser.username}` : "Not signed in";
+}
+
+function setLoginStatus(message, tone = "neutral") {
+  if (!loginStatusElement) return;
+  loginStatusElement.textContent = message;
+  loginStatusElement.className = `login-status login-status--${tone}`;
+}
+
+async function ensureOtpAuthReady() {
+  if (!firebaseSettings.enabled || !hasFirebaseConfig(firebaseSettings.config)) {
+    throw new Error("Firebase configuration is missing.");
+  }
+  if (!firebaseOtpAvailable()) {
+    throw new Error("Firebase Auth SDK is not loaded.");
+  }
+
+  if (!otpFirebaseApp) {
+    otpFirebaseApp = window.firebase.apps.find((app) => app.name === "otp-auth")
+      || window.firebase.initializeApp(firebaseSettings.config, "otp-auth");
+  }
+  if (!otpAuth) {
+    otpAuth = window.firebase.auth(otpFirebaseApp);
+    otpAuth.useDeviceLanguage();
+    await otpAuth.setPersistence(window.firebase.auth.Auth.Persistence.SESSION);
+    attachOtpAuthObserver();
+  }
+  otpAuth.settings.appVerificationDisabledForTesting = otpModeSelect.value === "test";
+  return otpAuth;
+}
+
+async function ensureOtpRecaptchaVerifier() {
+  await ensureOtpAuthReady();
+  if (otpRecaptchaVerifier) return otpRecaptchaVerifier;
+
+  otpRecaptchaVerifier = new window.firebase.auth.RecaptchaVerifier("otp-recaptcha-container", {
+    size: "normal",
+    callback: () => {
+      setOtpStatus("reCAPTCHA solved. You can continue with OTP sending.", "neutral");
+    },
+    "expired-callback": () => {
+      setOtpStatus("reCAPTCHA expired. Please solve it again before resending the OTP.", "error");
+    },
+  }, otpFirebaseApp);
+
+  otpRecaptchaWidgetId = await otpRecaptchaVerifier.render();
+  return otpRecaptchaVerifier;
+}
+
+function attachOtpAuthObserver() {
+  if (!otpAuth || otpAuthObserverAttached) return;
+  otpAuth.onAuthStateChanged((user) => {
+    updateOtpAuthUserDisplay(user);
+  });
+  otpAuthObserverAttached = true;
+}
+
+function resetOtpVerifierState() {
+  resetOtpRecaptcha();
+  if (otpRecaptchaVerifier) {
+    otpRecaptchaVerifier.clear();
+  }
+  otpRecaptchaVerifier = null;
+  otpRecaptchaWidgetId = null;
+  if (otpRecaptchaContainer) {
+    otpRecaptchaContainer.innerHTML = "";
+  }
+}
+
+function resetOtpRecaptcha() {
+  if (otpRecaptchaWidgetId !== null && window.grecaptcha) {
+    window.grecaptcha.reset(otpRecaptchaWidgetId);
+  }
+}
+
+function updateOtpAuthUserDisplay(user) {
+  if (!otpAuthUserElement) return;
+  otpAuthUserElement.textContent = user
+    ? `Authenticated OTP user: ${user.phoneNumber || "Unknown phone"} | UID: ${user.uid}`
+    : "No OTP-authenticated user yet.";
+}
+
+function setOtpStatus(message, tone = "neutral") {
+  if (!otpStatusElement) return;
+  otpStatusElement.textContent = message;
+  otpStatusElement.className = `otp-status otp-status--${tone}`;
+}
+
+function getOtpReadinessMessage() {
+  if (!firebaseSettings.enabled || !hasFirebaseConfig(firebaseSettings.config)) {
+    return "Firebase is not configured yet. OTP testing will not work until Firebase config is available.";
+  }
+  if (!firebaseOtpAvailable()) {
+    return "Firebase Auth SDK is not loaded. Check the Firebase script tags.";
+  }
+  return otpModeSelect.value === "test"
+    ? "Firebase OTP test app is ready in test mode. Use a configured Firebase test number."
+    : "Firebase OTP test app is ready in live mode. Use an E.164 phone number and complete the reCAPTCHA challenge.";
+}
+
+function isValidOtpPhoneNumber(value) {
+  return /^\+[1-9]\d{7,14}$/.test(String(value || "").trim());
+}
+
+function firebaseOtpAvailable() {
+  return Boolean(window.firebase && typeof window.firebase.initializeApp === "function" && window.firebase.auth);
+}
+
+function getOtpErrorMessage(error) {
+  const code = String(error?.code || "");
+  const suffix = code ? ` [${code}]` : "";
+  if (code.includes("auth/operation-not-allowed")) return `Phone authentication is not enabled in Firebase Authentication.${suffix}`;
+  if (code.includes("auth/unauthorized-domain")) return `This domain is not authorized for Firebase phone auth. Add it in Firebase Authentication settings.${suffix}`;
+  if (code.includes("auth/invalid-phone-number")) return `Firebase rejected the phone number format. Use E.164 format, for example +919876543210.${suffix}`;
+  if (code.includes("auth/too-many-requests")) return `Firebase throttled OTP requests for this session or phone number. Wait and try again, or use a test phone number.${suffix}`;
+  if (code.includes("auth/billing-not-enabled")) return `Phone OTP billing is not enabled for this Firebase project.${suffix}`;
+  if (code.includes("auth/quota-exceeded")) return `Firebase OTP quota has been exceeded for this project.${suffix}`;
+  if (code.includes("auth/captcha-check-failed")) return `reCAPTCHA validation failed. Solve it again and retry.${suffix}`;
+  if (code.includes("auth/code-expired")) return `The OTP code expired. Send a new OTP and try again.${suffix}`;
+  if (code.includes("auth/invalid-verification-code")) return `The OTP code is invalid. Check the code and retry.${suffix}`;
+  if (code.includes("auth/missing-verification-code")) return `Enter the OTP code before verifying.${suffix}`;
+  return `${String(error?.message || "OTP request failed.")}${suffix ? ` ${suffix}` : ""}`;
 }
 
 function getOrdersSortedNewestFirst() {
@@ -1537,7 +2410,7 @@ function handleProjectedBoxAction(event) {
   state.seeding[cropId][trayId][seedingDate] = currentValue + trayCount;
   activeProjectedBoxTooltipKey = "";
   renderYield();
-  markDirty();
+  markDirty({ immediate: true });
   setSyncStatus(`Added ${trayCount} ${trayId === "green" ? "green" : "black"} trays on ${formatDayMonth(parseOrderDate(seedingDate))}`);
 }
 
@@ -1652,6 +2525,7 @@ function hydrateMigratedOrder(order, customerByCode) {
     customerId: customer?.id || order.customerId || createId("customer"),
     customerName: customer?.customerName || order.customerName || "",
     customerCode: customer?.customerCode || order.customerCode || "",
+    invoicingType: normalizeInvoicingType(order.invoicingType || customer?.invoicingType),
     billing,
     date: order.date || "",
     invoiceNumber: order.invoiceNumber || "",
@@ -1692,19 +2566,350 @@ function normalizeSkuName(name) {
   return migrationSkuAliases[lowered] || lowered;
 }
 
-function getNextInvoiceNumber() {
-  const highest = state.orders.reduce((max, order) => Math.max(max, extractInvoiceSequence(order.invoiceNumber)), 0);
-  return String(highest + 1).padStart(4, "0");
+function getNextInvoiceNumber(customer = null) {
+  const invoicingType = normalizeInvoicingType(customer?.invoicingType);
+  if (invoicingType === "informal") {
+    const highestInformal = state.orders.reduce((max, order) => {
+      const orderType = normalizeInvoicingType(order.invoicingType);
+      if (orderType !== "informal") return max;
+      return Math.max(max, extractInformalInvoiceSequence(order.invoiceNumber));
+    }, 0);
+    return formatInformalInvoiceNumber(highestInformal + 1);
+  }
+
+  const highestFormal = state.orders.reduce((max, order) => {
+    const orderType = normalizeInvoicingType(order.invoicingType);
+    if (orderType !== "formal") return max;
+    return Math.max(max, extractFormalInvoiceSequence(order.invoiceNumber));
+  }, 0);
+  return String(highestFormal + 1).padStart(4, "0");
 }
 
 function extractInvoiceSequence(invoiceNumber) {
+  const invoiceValue = String(invoiceNumber || "").trim().toUpperCase();
+  if (/[A-Z]/.test(invoiceValue)) {
+    return extractInformalInvoiceSequence(invoiceValue);
+  }
+  return extractFormalInvoiceSequence(invoiceValue);
+}
+
+function extractFormalInvoiceSequence(invoiceNumber) {
   const match = String(invoiceNumber || "").match(/(\d+)(?!.*\d)/);
   return match ? parseInt(match[1], 10) : 0;
+}
+
+function extractInformalInvoiceSequence(invoiceNumber) {
+  const letters = String(invoiceNumber || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z]/g, "");
+  if (!letters) return 0;
+
+  let value = 0;
+  letters.split("").forEach((character) => {
+    value = (value * 26) + (character.charCodeAt(0) - 64);
+  });
+  return value;
+}
+
+function formatInformalInvoiceNumber(sequence) {
+  const letters = convertNumberToInvoiceLetters(Math.max(1, sequence));
+  return letters.padStart(4, "0");
+}
+
+function convertNumberToInvoiceLetters(sequence) {
+  let remaining = Math.max(1, sequence);
+  let output = "";
+  while (remaining > 0) {
+    remaining -= 1;
+    output = String.fromCharCode(65 + (remaining % 26)) + output;
+    remaining = Math.floor(remaining / 26);
+  }
+  return output;
+}
+
+function normalizeInvoicingType(value) {
+  return value === "informal" ? "informal" : "formal";
+}
+
+function formatInvoicingType(value) {
+  return normalizeInvoicingType(value) === "informal" ? "Informal" : "Formal";
 }
 
 function parseOrderDate(value) {
   const parsed = startOfDay(new Date(value));
   return Number.isNaN(parsed.getTime()) ? new Date(0) : parsed;
+}
+
+function buildSalesSummary() {
+  const monthKey = toMonthKey(today);
+  const currentYear = today.getFullYear();
+  const grouped = new Map();
+
+  state.orders.forEach((order) => {
+    const billingOrganization = order.billing?.organization || getOrderDisplayCustomerName(order) || "Unknown Billing Organization";
+    const billingOrganizationKey = normalizeBillingOrganizationKey(billingOrganization);
+    const matchedCustomer = state.customers.find((customer) =>
+      (order.customerId && customer.id === order.customerId)
+      || (order.customerCode && customer.customerCode === order.customerCode)
+    );
+    const customerName = matchedCustomer?.customerName || order.customerName || billingOrganization;
+    const row = grouped.get(billingOrganizationKey) || {
+      billingOrganizationKey,
+      billingOrganization,
+      customerNames: new Set(),
+      totalSale: 0,
+      totalDue: 0,
+      amountReceived: 0,
+    };
+
+    row.customerNames.add(customerName);
+    row.totalSale += toPositiveNumber(order.total, 0);
+    if (parseOrderDate(order.dueDate) <= today) {
+      row.totalDue += toPositiveNumber(order.total, 0);
+    }
+    grouped.set(billingOrganizationKey, row);
+  });
+
+  state.payments.forEach((payment) => {
+    const billingOrganizationKey = payment.billingOrganizationKey || normalizeBillingOrganizationKey(payment.billingOrganization || payment.customerNamesLabel || "");
+    if (!billingOrganizationKey) return;
+    const row = grouped.get(billingOrganizationKey) || {
+      billingOrganizationKey,
+      billingOrganization: payment.billingOrganization || payment.customerNamesLabel || "Unknown Billing Organization",
+      customerNames: new Set(),
+      totalSale: 0,
+      totalDue: 0,
+      amountReceived: 0,
+    };
+    if (payment.customerNamesLabel) {
+      payment.customerNamesLabel.split(",").map((name) => name.trim()).filter(Boolean).forEach((name) => row.customerNames.add(name));
+    }
+    row.amountReceived += toPositiveNumber(payment.amount, 0);
+    grouped.set(billingOrganizationKey, row);
+  });
+
+  const customerRows = Array.from(grouped.values())
+    .map((row) => ({
+      ...row,
+      customerNamesLabel: Array.from(row.customerNames).sort((left, right) => left.localeCompare(right)).join(", ") || row.billingOrganization,
+    }))
+    .sort((left, right) => right.totalSale - left.totalSale || left.customerNamesLabel.localeCompare(right.customerNamesLabel));
+
+  return {
+    mtdSales: state.orders
+      .filter((order) => toMonthKey(parseOrderDate(order.date)) === monthKey)
+      .reduce((sum, order) => sum + toPositiveNumber(order.total, 0), 0),
+    ytdSales: state.orders
+      .filter((order) => parseOrderDate(order.date).getFullYear() === currentYear)
+      .reduce((sum, order) => sum + toPositiveNumber(order.total, 0), 0),
+    rows: customerRows,
+  };
+}
+
+function buildLedgerSummary(billingOrganizationKey) {
+  const salesRow = buildSalesSummary().rows.find((row) => row.billingOrganizationKey === billingOrganizationKey);
+  if (!salesRow) return null;
+
+  const entries = [];
+  state.orders
+    .filter((order) => normalizeBillingOrganizationKey(order.billing?.organization || getOrderDisplayCustomerName(order) || "") === billingOrganizationKey)
+    .forEach((order) => {
+      entries.push({
+        type: "Invoice",
+        date: order.date,
+        reference: order.invoiceNumber || order.id,
+        note: (order.items || []).map((item) => item.description).join(", "),
+        dueDate: order.dueDate || "",
+        debit: toPositiveNumber(order.total, 0),
+        credit: 0,
+      });
+    });
+
+  state.payments
+    .filter((payment) => (payment.billingOrganizationKey || normalizeBillingOrganizationKey(payment.billingOrganization || payment.customerNamesLabel || "")) === billingOrganizationKey)
+    .forEach((payment) => {
+      entries.push({
+        type: "Receipt",
+        date: payment.date || toInputDate(today),
+        reference: payment.id,
+        note: payment.notes || "Payment received",
+        dueDate: "",
+        debit: 0,
+        credit: toPositiveNumber(payment.amount, 0),
+      });
+    });
+
+  entries.sort((left, right) => {
+    const dateDifference = parseOrderDate(left.date) - parseOrderDate(right.date);
+    if (dateDifference !== 0) return dateDifference;
+    return left.type === right.type ? 0 : (left.type === "Invoice" ? -1 : 1);
+  });
+
+  let runningBalance = 0;
+  const rows = entries.map((entry) => {
+    runningBalance += entry.debit - entry.credit;
+    return {
+      ...entry,
+      balance: runningBalance,
+    };
+  });
+
+  return {
+    ...salesRow,
+    customerGst: getLedgerCustomerGst(billingOrganizationKey),
+    entries: rows,
+    totalInvoiced: rows.reduce((sum, entry) => sum + entry.debit, 0),
+    totalReceived: rows.reduce((sum, entry) => sum + entry.credit, 0),
+    outstanding: Math.max(0, runningBalance),
+  };
+}
+
+function getLedgerCustomerGst(billingOrganizationKey) {
+  const matchingOrder = [...state.orders]
+    .reverse()
+    .find((order) => normalizeBillingOrganizationKey(order.billing?.organization || getOrderDisplayCustomerName(order) || "") === billingOrganizationKey);
+  if (matchingOrder?.billing?.gst) return matchingOrder.billing.gst;
+
+  const matchingCustomer = state.customers.find((customer) =>
+    normalizeBillingOrganizationKey(customer.billing?.organization || customer.customerName || "") === billingOrganizationKey
+  );
+  return matchingCustomer?.billing?.gst || "-";
+}
+
+function renderLedgerReport(billingOrganizationKey) {
+  handleDownloadLedger(billingOrganizationKey);
+}
+
+function refreshLedgerReport() {
+  return;
+}
+
+function buildLedgerMarkup(ledger) {
+  return `
+    <div class="ledger-sheet">
+      <div class="ledger-header">
+        <div class="ledger-brand">
+          <img src="${companyDetails.logoPath}" alt="Leaf Over Logic logo" class="invoice-logo">
+          <div>
+            <h3>${escapeHtml(companyDetails.name)}</h3>
+            ${companyDetails.address.map((line) => `<div>${escapeHtml(line)}</div>`).join("")}
+            <div>GSTIN/UIN: ${escapeHtml(companyDetails.gst || "-")}</div>
+            <div>Phone: ${escapeHtml(companyDetails.phone)}</div>
+          </div>
+        </div>
+        <div class="ledger-meta">
+          <h3>Customer Ledger</h3>
+          <div>Generated: ${formatInvoiceDate(toInputDate(today))}</div>
+          <div>Customer: ${escapeHtml(ledger.customerNamesLabel)}</div>
+          <div>Organization: ${escapeHtml(ledger.billingOrganization)}</div>
+          <div>Customer GSTIN/UIN: ${escapeHtml(ledger.customerGst || "-")}</div>
+        </div>
+      </div>
+      <div class="ledger-summary-grid">
+        <div class="ledger-summary-card">
+          <span>Total Invoiced</span>
+          <strong>${formatCurrency(ledger.totalInvoiced)}</strong>
+        </div>
+        <div class="ledger-summary-card">
+          <span>Total Received</span>
+          <strong>${formatCurrency(ledger.totalReceived)}</strong>
+        </div>
+        <div class="ledger-summary-card">
+          <span>Outstanding</span>
+          <strong>${formatCurrency(ledger.outstanding)}</strong>
+        </div>
+      </div>
+      <table class="invoice-table ledger-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Reference</th>
+            <th>Details</th>
+            <th>Due Date</th>
+            <th>Debit</th>
+            <th>Credit</th>
+            <th>Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${ledger.entries.length ? ledger.entries.map((entry) => `
+            <tr>
+              <td>${formatInvoiceDate(entry.date)}</td>
+              <td>${escapeHtml(entry.type)}</td>
+              <td>${escapeHtml(entry.reference || "-")}</td>
+              <td>${escapeHtml(entry.note || "-")}</td>
+              <td>${entry.dueDate ? formatInvoiceDate(entry.dueDate) : "-"}</td>
+              <td>${entry.debit ? formatCurrency(entry.debit) : "-"}</td>
+              <td>${entry.credit ? formatCurrency(entry.credit) : "-"}</td>
+              <td>${formatCurrency(entry.balance)}</td>
+            </tr>
+          `).join("") : `
+            <tr>
+              <td colspan="8">No ledger activity available for this customer.</td>
+            </tr>
+          `}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function handleDownloadLedger(billingOrganizationKey = currentLedgerBillingOrganizationKey) {
+  const ledger = buildLedgerSummary(billingOrganizationKey);
+  if (!ledger) {
+    setSyncStatus("Download a ledger from the customer sales table");
+    return;
+  }
+  currentLedgerBillingOrganizationKey = billingOrganizationKey;
+  const printWindow = window.open("", "_blank", "width=1280,height=900");
+  const stylesheetUrl = new URL("styles.css", window.location.href).href;
+  const printMarkup = `
+    <html>
+      <head>
+        <title>Customer Ledger</title>
+        <base href="${window.location.href}">
+        <link rel="stylesheet" href="${stylesheetUrl}">
+      </head>
+      <body class="print-window">
+        ${buildLedgerMarkup(ledger)}
+      </body>
+    </html>
+  `;
+  printWindow.document.write(printMarkup);
+  printWindow.document.close();
+  printWindow.addEventListener("load", () => {
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+    }, 250);
+  }, { once: true });
+}
+
+function normalizeBillingOrganizationKey(value) {
+  return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function findTitleById(titleId) {
+  return state.titles.find((title) => title.id === titleId) || null;
+}
+
+function findUserById(userId) {
+  return state.users.find((user) => user.id === userId) || null;
+}
+
+function getUserFullName(user) {
+  return [user?.firstName || "", user?.lastName || ""].join(" ").trim() || "Unnamed User";
+}
+
+async function hashPassword(value) {
+  const normalized = String(value || "");
+  if (!window.crypto?.subtle || !window.TextEncoder) {
+    throw new Error("Secure password hashing is not supported in this browser.");
+  }
+  const digest = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(normalized));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 function toMonthKey(date) {
@@ -1732,6 +2937,7 @@ function getTrayYieldBoxes(crop, trayId) {
 }
 
 function getHarvestDatesForWindow() {
+  if (!state.crops.length) return [];
   const maxHarvestDays = Math.max(...state.crops.map((crop) => crop.harvestDays));
   const dates = [];
   let cursor = addDays(seedingDates[0], DEFAULT_REFERENCE_HARVEST_DAYS);
@@ -1745,7 +2951,8 @@ function getHarvestDatesForWindow() {
 
 function getCropBoxesForHarvestDate(crop, harvestDate) {
   const key = toDateKey(addDays(harvestDate, -crop.harvestDays));
-  return (state.seeding[crop.id].green[key] || 0) * getTrayYieldBoxes(crop, "green") + (state.seeding[crop.id].black[key] || 0) * getTrayYieldBoxes(crop, "black");
+  const cropSeeding = state.seeding[crop.id] || { green: {}, black: {} };
+  return (cropSeeding.green[key] || 0) * getTrayYieldBoxes(crop, "green") + (cropSeeding.black[key] || 0) * getTrayYieldBoxes(crop, "black");
 }
 
 function getTotalBoxesForHarvestDate(date) {
@@ -1762,6 +2969,22 @@ function renderDateHeader(date) {
 
 function setSyncStatus(message) {
   syncStatusElement.textContent = message;
+}
+
+function showSaveFeedback(element, message = "Save successful") {
+  if (!element) return;
+  const existingTimer = saveFeedbackTimers.get(element);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+  }
+  element.textContent = message;
+  element.classList.add("is-visible");
+  const timerId = window.setTimeout(() => {
+    element.classList.remove("is-visible");
+    element.textContent = "";
+    saveFeedbackTimers.delete(element);
+  }, 2200);
+  saveFeedbackTimers.set(element, timerId);
 }
 
 function createId(prefix) {
